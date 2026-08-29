@@ -15,35 +15,35 @@ export default function TournamentsPage({
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-surface-border">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <Trophy className="w-5 h-5 text-cyan-400" />
-            <span className="text-xs font-mono uppercase tracking-widest text-cyan-400 font-semibold">
-              TOURNAMENT DIRECTORY
+            <Trophy className="w-5 h-5 text-brand-crimson" />
+            <span className="text-xs font-mono uppercase tracking-widest text-brand-crimson font-semibold">
+              ARENEX TOURNAMENT DIRECTORY
             </span>
           </div>
           <h1 className="font-display text-3xl sm:text-4xl font-black text-white uppercase tracking-tight">
-            Competitive Circuit
+            Arena Tournaments
           </h1>
           <p className="text-xs sm:text-sm text-gray-400 mt-1">
-            Browse active qualifiers, invitationals, and community prize cups
+            Claim your spot in active cups, qualifiers, and high-stakes battle royale tournaments.
           </p>
         </div>
 
         {/* Quick Format Filter Tabs */}
-        <div className="flex flex-wrap items-center gap-2 text-xs font-medium">
-          <span className="text-gray-400 flex items-center gap-1 mr-2">
+        <div className="flex flex-wrap items-center gap-2 text-xs font-medium font-display">
+          <span className="text-gray-400 flex items-center gap-1 mr-2 font-mono">
             <Filter className="w-3.5 h-3.5" />
             Format:
           </span>
-          <button className="px-3 py-1.5 rounded-lg bg-cyan-500 text-black font-semibold">
+          <button className="px-3.5 py-1.5 rounded-lg bg-brand-crimson text-white font-semibold uppercase tracking-wider">
             All Formats
           </button>
-          <button className="px-3 py-1.5 rounded-lg bg-surface-elevated text-gray-300 hover:text-white border border-surface-border">
+          <button className="px-3.5 py-1.5 rounded-lg bg-surface-elevated text-gray-300 hover:text-white border border-surface-border uppercase tracking-wider">
             Solo (Battle Royale)
           </button>
-          <button className="px-3 py-1.5 rounded-lg bg-surface-elevated text-gray-300 hover:text-white border border-surface-border">
+          <button className="px-3.5 py-1.5 rounded-lg bg-surface-elevated text-gray-300 hover:text-white border border-surface-border uppercase tracking-wider">
             Squad (4v4)
           </button>
-          <button className="px-3 py-1.5 rounded-lg bg-surface-elevated text-gray-300 hover:text-white border border-surface-border">
+          <button className="px-3.5 py-1.5 rounded-lg bg-surface-elevated text-gray-300 hover:text-white border border-surface-border uppercase tracking-wider">
             Lone Wolf (1v1)
           </button>
         </div>

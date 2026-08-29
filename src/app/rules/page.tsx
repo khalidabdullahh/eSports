@@ -14,7 +14,7 @@ export default function RulesPage() {
 
       <div className="rounded-2xl bg-surface-100 border border-surface-border p-6 sm:p-8 space-y-6">
         <div className="border-b border-surface-border pb-4">
-          <div className="flex items-center gap-2 text-cyan-400 text-xs font-mono mb-1">
+          <div className="flex items-center gap-2 text-brand-crimson text-xs font-mono mb-1">
             <Shield className="w-4 h-4" />
             <span>COMPETITIVE INTEGRITY & FAIR PLAY</span>
           </div>
@@ -22,7 +22,7 @@ export default function RulesPage() {
             Official Tournament Rulebook
           </h1>
           <p className="text-xs text-gray-400 mt-1">
-            Standard operating rules for all Free Fire competitive cups on NexusOps
+            Standard operating rules for all Free Fire competitive cups on AreNex
           </p>
         </div>
 

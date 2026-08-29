@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { Trophy, Radio, Shield, User, ChevronRight } from "lucide-react";
+import { Radio, Shield, User, ChevronRight, Sparkles } from "lucide-react";
 import { Badge } from "./ui/badge";
 import { RoleSwitcher } from "./ui/role-switcher";
+import { ArenexLogo } from "./brand/arenex-logo";
 import { dataStore } from "@/lib/store";
 
 export function Navbar() {
@@ -20,24 +21,10 @@ export function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
         {/* Brand */}
         <div className="flex items-center gap-6">
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-cyan-500 via-blue-600 to-indigo-700 flex items-center justify-center p-0.5 shadow-lg shadow-cyan-500/20 group-hover:shadow-cyan-500/40 transition-all">
-              <div className="w-full h-full bg-surface-300 rounded-[7px] flex items-center justify-center">
-                <Trophy className="w-4.5 h-4.5 text-cyan-400" />
-              </div>
-            </div>
-            <div className="flex flex-col">
-              <span className="font-display text-lg font-black tracking-wider text-white uppercase group-hover:text-cyan-400 transition-colors">
-                NEXUS<span className="text-cyan-400">OPS</span>
-              </span>
-              <span className="text-[9px] uppercase tracking-widest text-gray-400 font-mono -mt-1">
-                Esports Platform
-              </span>
-            </div>
-          </Link>
+          <ArenexLogo variant="full" size="md" linkToHome showTagline />
 
           {/* Desktop Nav Links */}
-          <nav className="hidden md:flex items-center gap-1 text-sm font-medium">
+          <nav className="hidden lg:flex items-center gap-1 text-sm font-medium">
             <Link
               href="/tournaments"
               className="px-3 py-1.5 rounded-md text-gray-300 hover:text-white hover:bg-surface-elevated transition-colors"
@@ -48,8 +35,8 @@ export function Navbar() {
               href="/live"
               className="px-3 py-1.5 rounded-md text-gray-300 hover:text-white hover:bg-surface-elevated transition-colors flex items-center gap-1.5"
             >
-              <Radio className="w-3.5 h-3.5 text-red-500 animate-pulse" />
-              Live Match
+              <Radio className="w-3.5 h-3.5 text-brand-crimson animate-pulse" />
+              Live Arena
               <Badge variant="live" pulse className="px-1.5 py-0 text-[10px]">
                 LIVE
               </Badge>
@@ -67,10 +54,17 @@ export function Navbar() {
               Teams
             </Link>
             <Link
-              href="/how-it-works"
+              href="/about"
               className="px-3 py-1.5 rounded-md text-gray-400 hover:text-gray-200 transition-colors"
             >
-              How It Works
+              About
+            </Link>
+            <Link
+              href="/brand"
+              className="px-2.5 py-1 rounded-md text-[11px] font-semibold text-brand-crimson bg-brand-crimson/10 border border-brand-crimson/30 hover:bg-brand-crimson/20 transition-all flex items-center gap-1"
+            >
+              <Sparkles className="w-3 h-3" />
+              Brand
             </Link>
           </nav>
         </div>
@@ -83,7 +77,7 @@ export function Navbar() {
           {isStaff && (
             <Link
               href="/admin"
-              className="hidden lg:flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-md bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 hover:bg-cyan-500/20 transition-all"
+              className="hidden sm:flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-md bg-brand-crimson/10 text-brand-crimsonLight border border-brand-crimson/30 hover:bg-brand-crimson/20 transition-all"
             >
               <Shield className="w-3.5 h-3.5" />
               Ops Console
@@ -99,7 +93,7 @@ export function Navbar() {
               <img
                 src={currentUser.avatar_url}
                 alt={currentUser.display_name}
-                className="w-6 h-6 rounded-full object-cover ring-1 ring-cyan-500/50"
+                className="w-6 h-6 rounded-full object-cover ring-1 ring-brand-crimson/50"
               />
             ) : (
               <div className="w-6 h-6 rounded-full bg-surface-border flex items-center justify-center">

@@ -43,12 +43,12 @@ export default function AdminDashboardPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-surface-border">
         <div>
-          <div className="flex items-center gap-2 text-xs font-mono text-cyan-400 font-semibold mb-1">
+          <div className="flex items-center gap-2 text-xs font-mono text-brand-crimson font-semibold mb-1">
             <Shield className="w-4 h-4" />
             <span>OPERATIONS & EXECUTIVE CONTROL DESK</span>
           </div>
           <h1 className="font-display text-3xl sm:text-4xl font-black text-white uppercase tracking-tight">
-            NexusOps Admin Portal
+            ARENEX Operations Portal
           </h1>
           <p className="text-xs sm:text-sm text-gray-400 mt-1">
             Server-authoritative tournament management, referee consoles, financial ledger, and compliance
@@ -59,7 +59,7 @@ export default function AdminDashboardPage() {
           {liveTournament && (
             <Link
               href={`/admin/referee/match-night-battle-round-1`}
-              className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-white font-semibold text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-lg shadow-red-600/25 transition-all"
+              className="px-4 py-2 rounded-lg bg-brand-crimson hover:bg-brand-crimsonDark text-white font-semibold text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-lg shadow-brand-crimson/25 transition-all font-display"
             >
               <Radio className="w-3.5 h-3.5 animate-pulse" />
               Open Live Referee Desk
@@ -67,9 +67,9 @@ export default function AdminDashboardPage() {
           )}
           <Link
             href="/admin/finance/payments"
-            className="px-4 py-2 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-black font-semibold text-xs uppercase tracking-wider flex items-center gap-1.5 transition-all"
+            className="px-4 py-2 rounded-lg bg-surface-elevated hover:bg-surface-50 text-gray-200 hover:text-white border border-surface-border font-semibold text-xs uppercase tracking-wider flex items-center gap-1.5 transition-all font-display"
           >
-            <DollarSign className="w-3.5 h-3.5" />
+            <DollarSign className="w-3.5 h-3.5 text-brand-emerald" />
             Verify Payments ({pendingPayments.length})
           </Link>
         </div>

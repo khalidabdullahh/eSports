@@ -16,15 +16,15 @@ export default function TermsPage() {
         <h1 className="font-display text-2xl sm:text-3xl font-black text-white uppercase">
           Terms of Service
         </h1>
-        <div className="space-y-4 text-xs text-gray-300 leading-relaxed">
+        <div className="space-y-4 text-xs text-gray-300 leading-relaxed font-sans">
           <p>
-            NexusOps operates competitive skill-based esports tournaments. Participation is open only to players who meet minimum age requirements in their jurisdiction and comply with our fair play standards.
+            AreNex (Arena + Next) operates competitive skill-based esports tournaments. Participation is open only to players who meet minimum age requirements in their jurisdiction and comply with our fair play standards.
           </p>
           <p>
-            All prize distributions and performance rewards are deterministic and calculated based on published rules. NexusOps does not offer games of chance. Winnings are disbursed via authorized mobile financial services (bKash/Nagad).
+            All prize distributions and performance rewards are deterministic and calculated based on published rules. AreNex does not offer games of chance. Winnings are disbursed via authorized mobile financial services (bKash/Nagad).
           </p>
           <p>
-            NexusOps is an independent competitive platform and is not officially affiliated with or endorsed by Garena or Free Fire.
+            AreNex is an independent competitive platform and is not officially affiliated with or endorsed by Garena or Free Fire.
           </p>
         </div>
       </div>

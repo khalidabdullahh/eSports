@@ -3,7 +3,7 @@ import { Tournament } from "@/types";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
 import { Badge } from "./ui/badge";
 import { ProgressBar } from "./ui/progress-bar";
-import { Trophy, Users, Calendar, ArrowRight, ShieldAlert } from "lucide-react";
+import { Trophy, Users, Calendar, ArrowRight } from "lucide-react";
 
 interface TournamentCardProps {
   tournament: Tournament;
@@ -18,25 +18,25 @@ export function TournamentCard({ tournament }: TournamentCardProps) {
     tournament.main_prize_pool_cents + tournament.performance_reward_pool_cents;
 
   return (
-    <div className="group relative flex flex-col justify-between bg-surface-100 hover:bg-surface-elevated/80 border border-surface-border hover:border-surface-borderLight rounded-xl p-5 transition-all duration-300 shadow-lg hover:shadow-cyan-500/5">
+    <div className="group relative flex flex-col justify-between bg-surface-100 hover:bg-surface-elevated/80 border border-surface-border hover:border-brand-crimson/50 rounded-xl p-5 transition-all duration-300 shadow-lg hover:shadow-[0_0_20px_rgba(255,30,68,0.1)]">
       {/* Top Bar: Game, Format, Status Badge */}
       <div className="flex items-center justify-between gap-2 mb-3">
         <div className="flex items-center gap-2">
-          <span className="text-[11px] font-mono uppercase tracking-wider text-cyan-400 font-semibold bg-cyan-950/40 px-2 py-0.5 rounded border border-cyan-800/40">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-brand-crimson font-semibold bg-brand-crimson/10 px-2 py-0.5 rounded border border-brand-crimson/30">
             {tournament.game_name}
           </span>
-          <span className="text-[11px] font-mono uppercase tracking-wider text-gray-400 bg-surface-200 px-2 py-0.5 rounded border border-surface-border">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-gray-400 bg-surface-200 px-2 py-0.5 rounded border border-surface-border">
             {tournament.format}
           </span>
         </div>
 
         {isLive ? (
           <Badge variant="live" pulse>
-            LIVE NOW
+            LIVE BATTLE
           </Badge>
         ) : isRegistrationOpen ? (
-          <Badge variant="emerald">
-            {isFull ? "SLOTS FULL" : "OPEN"}
+          <Badge variant={isFull ? "surface" : "emerald"}>
+            {isFull ? "ARENA FULL" : "SLOTS OPEN"}
           </Badge>
         ) : (
           <Badge variant="surface">
@@ -48,7 +48,7 @@ export function TournamentCard({ tournament }: TournamentCardProps) {
       {/* Title & Mode */}
       <div className="mb-4">
         <Link href={`/tournaments/${tournament.slug || tournament.id}`}>
-          <h3 className="font-display text-lg font-bold text-white group-hover:text-cyan-300 transition-colors line-clamp-1">
+          <h3 className="font-display text-lg font-bold text-white group-hover:text-brand-crimsonLight transition-colors line-clamp-1 tracking-wide">
             {tournament.title}
           </h3>
         </Link>
@@ -59,20 +59,20 @@ export function TournamentCard({ tournament }: TournamentCardProps) {
       <div className="grid grid-cols-2 gap-3 py-3 px-3.5 mb-4 rounded-lg bg-surface-200/90 border border-surface-border/80">
         <div>
           <span className="text-[10px] uppercase font-mono tracking-wider text-gray-400 block">
-            Total Prize Pool
+            Guaranteed Pool
           </span>
-          <div className="flex items-baseline gap-1 text-amber-400 font-display font-black text-xl">
-            <Trophy className="w-4 h-4 text-amber-400" />
+          <div className="flex items-baseline gap-1 text-brand-gold font-display font-black text-xl">
+            <Trophy className="w-4 h-4 text-brand-gold" />
             <span>{formatCurrency(totalPrizeCents, tournament.currency)}</span>
           </div>
           <span className="text-[10px] text-gray-400 block font-mono">
-            Main: {formatCurrency(tournament.main_prize_pool_cents, tournament.currency)} + Perf: {formatCurrency(tournament.performance_reward_pool_cents, tournament.currency)}
+            Podium: {formatCurrency(tournament.main_prize_pool_cents, tournament.currency)} + Fragger: {formatCurrency(tournament.performance_reward_pool_cents, tournament.currency)}
           </span>
         </div>
 
         <div className="border-l border-surface-border/80 pl-3">
           <span className="text-[10px] uppercase font-mono tracking-wider text-gray-400 block">
-            Entry Fee
+            Entry Ticket
           </span>
           <div className="text-white font-display font-black text-xl">
             {tournament.entry_fee_cents === 0
@@ -90,7 +90,7 @@ export function TournamentCard({ tournament }: TournamentCardProps) {
         <div className="flex items-center justify-between text-xs text-gray-400 mb-1.5 font-mono">
           <span className="flex items-center gap-1.5 text-gray-300">
             <Users className="w-3.5 h-3.5 text-gray-400" />
-            Confirmed Slots
+            Arena Slots
           </span>
           <span className="font-bold text-gray-200">
             {tournament.current_participants_count} / {tournament.max_participants}
@@ -115,9 +115,9 @@ export function TournamentCard({ tournament }: TournamentCardProps) {
               ? `/live`
               : `/tournaments/${tournament.slug || tournament.id}`
           }
-          className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg bg-surface-elevated hover:bg-cyan-500 hover:text-black text-cyan-300 border border-surface-border hover:border-cyan-400 transition-all group-hover:bg-cyan-500 group-hover:text-black"
+          className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg bg-surface-elevated hover:bg-brand-crimson hover:text-white text-gray-200 border border-surface-border hover:border-brand-crimson transition-all font-display uppercase tracking-wider group-hover:bg-brand-crimson group-hover:text-white"
         >
-          <span>{isLive ? "Watch Live" : "View Details"}</span>
+          <span>{isLive ? "Watch Arena" : isRegistrationOpen ? "Enter Arena" : "View Cup"}</span>
           <ArrowRight className="w-3.5 h-3.5" />
         </Link>
       </div>

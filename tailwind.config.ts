@@ -9,23 +9,26 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "#080B11",
+        background: "#07090E",
         surface: {
           50: "#1A2234",
-          100: "#141B2A",
-          200: "#0F1522",
-          300: "#0B0F19",
-          DEFAULT: "#0F1522",
+          100: "#121724",
+          200: "#0D111A",
+          300: "#080B12",
+          DEFAULT: "#0D111A",
           elevated: "#182032",
-          border: "#202B42",
-          borderLight: "#2E3D5C",
+          border: "#1C2438",
+          borderLight: "#283450",
         },
         brand: {
-          cyan: "#00F0FF",
-          gold: "#FFB800",
-          crimson: "#FF334B",
-          emerald: "#00E676",
-          purple: "#9D4EDD",
+          crimson: "#FF1E44",
+          crimsonDark: "#D90429",
+          crimsonLight: "#FF4D6D",
+          ruby: "#E11D48",
+          gold: "#F59E0B",
+          emerald: "#10B981",
+          cyan: "#06B6D4",
+          purple: "#8B5CF6",
         },
       },
       fontFamily: {
@@ -55,16 +58,16 @@ const config: Config = {
       animation: {
         "pulse-subtle": "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
         "live-glow": "liveGlow 2s ease-in-out infinite alternate",
-        "glow-cyan": "glowCyan 2s ease-in-out infinite alternate",
+        "glow-crimson": "glowCrimson 2s ease-in-out infinite alternate",
       },
       keyframes: {
         liveGlow: {
-          "0%": { boxShadow: "0 0 4px rgba(255, 51, 75, 0.4)" },
-          "100%": { boxShadow: "0 0 14px rgba(255, 51, 75, 0.85)" },
+          "0%": { boxShadow: "0 0 4px rgba(255, 30, 68, 0.4)" },
+          "100%": { boxShadow: "0 0 16px rgba(255, 30, 68, 0.85)" },
         },
-        glowCyan: {
-          "0%": { boxShadow: "0 0 4px rgba(0, 240, 255, 0.3)" },
-          "100%": { boxShadow: "0 0 12px rgba(0, 240, 255, 0.75)" },
+        glowCrimson: {
+          "0%": { boxShadow: "0 0 4px rgba(255, 30, 68, 0.3)" },
+          "100%": { boxShadow: "0 0 14px rgba(255, 30, 68, 0.75)" },
         },
       },
     },

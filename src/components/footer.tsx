@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Trophy, ShieldCheck, Zap, Lock, Award } from "lucide-react";
+import { ShieldCheck, Zap, Lock, Award, Sparkles } from "lucide-react";
+import { ArenexLogo } from "./brand/arenex-logo";
 
 export function Footer() {
   return (
@@ -8,50 +9,50 @@ export function Footer() {
       <div className="border-b border-surface-border/60 bg-surface-200/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 grid grid-cols-2 md:grid-cols-4 gap-6">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+            <div className="p-2 rounded-lg bg-brand-crimson/10 text-brand-crimson border border-brand-crimson/20">
               <ShieldCheck className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-xs font-semibold text-white uppercase tracking-wider">
-                Anti-Cheat & Bans
+              <p className="text-xs font-semibold text-white uppercase tracking-wider font-display">
+                Competitive Integrity
               </p>
-              <p className="text-xs text-gray-400">Hardware & Free Fire UID bans</p>
+              <p className="text-xs text-gray-400">Anti-cheat & hardware UID enforcement</p>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20">
+            <div className="p-2 rounded-lg bg-brand-gold/10 text-brand-gold border border-brand-gold/20">
               <Award className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-xs font-semibold text-white uppercase tracking-wider">
-                Transparent Rewards
+              <p className="text-xs font-semibold text-white uppercase tracking-wider font-display">
+                Deterministic Rewards
               </p>
-              <p className="text-xs text-gray-400">Deterministic scoring & pool caps</p>
+              <p className="text-xs text-gray-400">Capped prize pools & top-fragger bonuses</p>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            <div className="p-2 rounded-lg bg-brand-emerald/10 text-brand-emerald border border-brand-emerald/20">
               <Zap className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-xs font-semibold text-white uppercase tracking-wider">
-                Instant Verification
+              <p className="text-xs font-semibold text-white uppercase tracking-wider font-display">
+                Referee Telemetry
               </p>
-              <p className="text-xs text-gray-400">Official referee match logging</p>
+              <p className="text-xs text-gray-400">Server-authoritative live match logging</p>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20">
+            <div className="p-2 rounded-lg bg-surface-50 text-gray-300 border border-surface-borderLight">
               <Lock className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-xs font-semibold text-white uppercase tracking-wider">
-                Protected Rooms
+              <p className="text-xs font-semibold text-white uppercase tracking-wider font-display">
+                Protected Vault
               </p>
-              <p className="text-xs text-gray-400">Authorized check-in credentials</p>
+              <p className="text-xs text-gray-400">Encrypted room keys for checked-in players</p>
             </div>
           </div>
         </div>
@@ -59,46 +60,59 @@ export function Footer() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-6">
         <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
-          {/* Col 1 */}
+          {/* Col 1: Brand Info */}
           <div className="md:col-span-2 space-y-4">
-            <div className="flex items-center gap-2">
-              <Trophy className="w-5 h-5 text-cyan-400" />
-              <span className="font-display text-lg font-black tracking-wider text-white uppercase">
-                NEXUS<span className="text-cyan-400">OPS</span>
-              </span>
-            </div>
+            <ArenexLogo variant="full" size="md" showTagline />
             <p className="text-xs text-gray-400 max-w-sm leading-relaxed">
-              Premium dark esports analytics platform with real-time tournament operations. Built for competitive Free Fire mobile warriors, featuring automated financial ledger tracking, protected room releases, and referee-authoritative telemetry.
+              AreNex (Arena + Next) is a next-generation competitive esports platform. A digital arena where players compete, prove their skill, build their reputation, and rise toward greatness.
             </p>
-            <p className="text-[11px] text-gray-500 font-mono">
-              NexusOps Platform • Dhaka, Bangladesh
-            </p>
+            <div className="flex items-center gap-3 pt-2">
+              <Link
+                href="/brand"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-crimsonLight hover:text-white transition-colors"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                Brand Identity Guide
+              </Link>
+              <span className="text-gray-600">•</span>
+              <Link
+                href="/about"
+                className="text-xs font-semibold text-gray-300 hover:text-white transition-colors"
+              >
+                Our Mission & Story
+              </Link>
+            </div>
           </div>
 
           {/* Col 2 */}
           <div>
-            <p className="text-xs font-semibold text-white uppercase tracking-wider mb-3">
-              Platform
+            <p className="text-xs font-semibold text-white uppercase tracking-wider font-display mb-3">
+              Competitive Arena
             </p>
             <ul className="space-y-2 text-xs">
               <li>
-                <Link href="/tournaments" className="hover:text-cyan-400 transition-colors">
+                <Link href="/tournaments" className="hover:text-brand-crimsonLight transition-colors">
                   All Tournaments
                 </Link>
               </li>
               <li>
-                <Link href="/live" className="hover:text-cyan-400 transition-colors">
+                <Link href="/live" className="hover:text-brand-crimsonLight transition-colors">
                   Live Match Broadcast
                 </Link>
               </li>
               <li>
-                <Link href="/rankings" className="hover:text-cyan-400 transition-colors">
-                  Leaderboards & Stats
+                <Link href="/rankings" className="hover:text-brand-crimsonLight transition-colors">
+                  Leaderboards & Power Ranks
                 </Link>
               </li>
               <li>
-                <Link href="/teams" className="hover:text-cyan-400 transition-colors">
+                <Link href="/teams" className="hover:text-brand-crimsonLight transition-colors">
                   Clans & Rosters
+                </Link>
+              </li>
+              <li>
+                <Link href="/how-it-works" className="hover:text-brand-crimsonLight transition-colors">
+                  Scoring Matrix & Rules
                 </Link>
               </li>
             </ul>
@@ -106,28 +120,28 @@ export function Footer() {
 
           {/* Col 3 */}
           <div>
-            <p className="text-xs font-semibold text-white uppercase tracking-wider mb-3">
-              Tournaments
+            <p className="text-xs font-semibold text-white uppercase tracking-wider font-display mb-3">
+              Battle Formats
             </p>
             <ul className="space-y-2 text-xs">
               <li>
-                <Link href="/tournaments?format=SOLO" className="hover:text-cyan-400 transition-colors">
-                  Solo Battle Royale
+                <Link href="/tournaments?format=SOLO" className="hover:text-brand-crimsonLight transition-colors">
+                  Solo Battle Royale (50P)
                 </Link>
               </li>
               <li>
-                <Link href="/tournaments?format=SQUAD" className="hover:text-cyan-400 transition-colors">
-                  Squad Clash
+                <Link href="/tournaments?format=SQUAD" className="hover:text-brand-crimsonLight transition-colors">
+                  Squad Clash (4v4)
                 </Link>
               </li>
               <li>
-                <Link href="/tournaments?format=LONE_WOLF" className="hover:text-cyan-400 transition-colors">
-                  Lone Wolf Duels
+                <Link href="/tournaments?format=LONE_WOLF" className="hover:text-brand-crimsonLight transition-colors">
+                  Lone Wolf Duel (1v1)
                 </Link>
               </li>
               <li>
-                <Link href="/how-it-works" className="hover:text-cyan-400 transition-colors">
-                  Scoring Matrix
+                <Link href="/disputes" className="hover:text-brand-crimsonLight transition-colors">
+                  Dispute Resolution Desk
                 </Link>
               </li>
             </ul>
@@ -135,28 +149,28 @@ export function Footer() {
 
           {/* Col 4 */}
           <div>
-            <p className="text-xs font-semibold text-white uppercase tracking-wider mb-3">
-              Compliance & Legal
+            <p className="text-xs font-semibold text-white uppercase tracking-wider font-display mb-3">
+              Integrity & Trust
             </p>
             <ul className="space-y-2 text-xs">
               <li>
-                <Link href="/rules" className="hover:text-cyan-400 transition-colors">
-                  Fair Play Policy
+                <Link href="/rules" className="hover:text-brand-crimsonLight transition-colors">
+                  Competitive Rulebook
                 </Link>
               </li>
               <li>
-                <Link href="/terms" className="hover:text-cyan-400 transition-colors">
+                <Link href="/terms" className="hover:text-brand-crimsonLight transition-colors">
                   Terms of Service
                 </Link>
               </li>
               <li>
-                <Link href="/privacy" className="hover:text-cyan-400 transition-colors">
+                <Link href="/privacy" className="hover:text-brand-crimsonLight transition-colors">
                   Privacy Policy
                 </Link>
               </li>
               <li>
-                <Link href="/disputes" className="hover:text-cyan-400 transition-colors">
-                  Dispute Resolution
+                <Link href="/support" className="hover:text-brand-crimsonLight transition-colors">
+                  Support & Tickets
                 </Link>
               </li>
             </ul>
@@ -164,11 +178,11 @@ export function Footer() {
         </div>
 
         <div className="border-t border-surface-border/60 mt-12 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-500">
-          <p>© 2026 NexusOps. Not officially affiliated with Garena Free Fire.</p>
+          <p>© 2026 ARENEX. All rights reserved. Where Players Compete. Legends Rise.</p>
           <div className="flex items-center gap-4">
-            <span className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-              All systems operational
+            <span className="flex items-center gap-1.5 font-mono text-[11px]">
+              <span className="w-2 h-2 rounded-full bg-brand-emerald animate-pulse"></span>
+              Arena Systems Active
             </span>
           </div>
         </div>

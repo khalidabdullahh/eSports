@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Match, MatchEvent, MatchParticipant, Tournament } from "@/types";
+import React, { useState } from "react";
+import { Match, MatchEvent, Tournament } from "@/types";
 import { Badge } from "./ui/badge";
 import { formatCurrency, formatRelativeTime } from "@/lib/utils";
 import {
@@ -11,12 +11,7 @@ import {
   Crosshair,
   Skull,
   Shield,
-  Clock,
   RefreshCw,
-  ExternalLink,
-  ChevronUp,
-  ChevronDown,
-  Volume2,
 } from "lucide-react";
 
 interface LiveMatchConsoleProps {
@@ -32,9 +27,8 @@ export function LiveMatchConsole({
 }: LiveMatchConsoleProps) {
   const [match, setMatch] = useState<Match>(initialMatch);
   const [events, setEvents] = useState<MatchEvent[]>(initialEvents);
-  const [isConnected, setIsConnected] = useState(true);
+  const [isConnected] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [activeTab, setActiveTab] = useState<"leaderboard" | "events" | "rules">("leaderboard");
 
   const participants = match.participants;
   const aliveParticipants = participants.filter((p) => p.is_alive);
@@ -50,7 +44,6 @@ export function LiveMatchConsole({
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
-      // In production or local server, this fetches latest authoritative state
       const res = await fetch(`/api/match/${match.id}`);
       if (res.ok) {
         const data = await res.json();
@@ -71,9 +64,9 @@ export function LiveMatchConsole({
         <div className="space-y-1.5">
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="live" pulse>
-              OFFICIAL BROADCAST • LIVE
+              ARENEX BROADCAST • LIVE
             </Badge>
-            <span className="text-xs font-mono uppercase tracking-wider text-cyan-400 font-semibold bg-cyan-950/60 px-2 py-0.5 rounded border border-cyan-800/60">
+            <span className="text-xs font-mono uppercase tracking-wider text-brand-crimson font-semibold bg-brand-crimson/10 px-2.5 py-0.5 rounded border border-brand-crimson/30">
               {tournament.game_name}
             </span>
             <span className="text-xs font-mono text-gray-400 bg-surface-200 px-2 py-0.5 rounded border border-surface-border">
@@ -91,66 +84,65 @@ export function LiveMatchConsole({
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-200 border border-surface-border text-xs font-mono">
             <span
               className={`w-2 h-2 rounded-full ${
-                isConnected ? "bg-emerald-400 animate-pulse" : "bg-amber-400"
+                isConnected ? "bg-brand-emerald animate-pulse" : "bg-brand-gold"
               }`}
             />
             <span className="text-gray-300">
-              {isConnected ? "Realtime Telemetry Active" : "Reconnecting..."}
+              {isConnected ? "Arena Telemetry Active" : "Reconnecting..."}
             </span>
           </div>
 
           <button
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className="p-2 rounded-lg bg-surface-elevated hover:bg-surface-border text-gray-300 hover:text-white transition-colors"
-            title="Refresh Authoritative State"
+            className="p-2 rounded-lg bg-surface-200 hover:bg-surface-elevated border border-surface-border text-gray-300 hover:text-white transition-colors"
+            title="Refresh Match Telemetry"
           >
-            <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`} />
+            <RefreshCw
+              className={`w-4 h-4 ${isRefreshing ? "animate-spin text-brand-crimson" : ""}`}
+            />
           </button>
         </div>
       </div>
 
-      {/* Live Match Stats Bar */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      {/* Live Match Metrics Bar */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
         <div className="p-4 rounded-xl bg-surface-100 border border-surface-border">
           <div className="flex items-center justify-between text-xs text-gray-400 font-mono uppercase mb-1">
-            <span>Survivors Alive</span>
-            <Crosshair className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Warriors In Combat</span>
+            <Users className="w-3.5 h-3.5 text-brand-emerald" />
           </div>
-          <div className="text-2xl sm:text-3xl font-display font-black text-emerald-400">
-            {aliveParticipants.length}{" "}
-            <span className="text-sm font-normal text-gray-500 font-mono">
-              / {participants.length}
-            </span>
+          <div className="text-2xl sm:text-3xl font-display font-black text-brand-emerald">
+            {aliveParticipants.length}
           </div>
         </div>
 
         <div className="p-4 rounded-xl bg-surface-100 border border-surface-border">
           <div className="flex items-center justify-between text-xs text-gray-400 font-mono uppercase mb-1">
             <span>Eliminated</span>
-            <Skull className="w-3.5 h-3.5 text-red-400" />
+            <Skull className="w-3.5 h-3.5 text-brand-crimson" />
           </div>
-          <div className="text-2xl sm:text-3xl font-display font-black text-red-400">
+          <div className="text-2xl sm:text-3xl font-display font-black text-brand-crimson">
             {eliminatedParticipants.length}
           </div>
         </div>
 
         <div className="p-4 rounded-xl bg-surface-100 border border-surface-border">
           <div className="flex items-center justify-between text-xs text-gray-400 font-mono uppercase mb-1">
-            <span>Total Kills</span>
-            <Trophy className="w-3.5 h-3.5 text-amber-400" />
+            <span>Total Frags</span>
+            <Trophy className="w-3.5 h-3.5 text-brand-gold" />
           </div>
-          <div className="text-2xl sm:text-3xl font-display font-black text-amber-400">
+          <div className="text-2xl sm:text-3xl font-display font-black text-brand-gold">
             {totalKills}
           </div>
         </div>
 
         <div className="p-4 rounded-xl bg-surface-100 border border-surface-border">
           <div className="flex items-center justify-between text-xs text-gray-400 font-mono uppercase mb-1">
-            <span>Prize Pool</span>
-            <Shield className="w-3.5 h-3.5 text-cyan-400" />
+            <span>Guaranteed Pool</span>
+            <Shield className="w-3.5 h-3.5 text-brand-gold" />
           </div>
-          <div className="text-2xl sm:text-3xl font-display font-black text-cyan-400">
+          <div className="text-2xl sm:text-3xl font-display font-black text-white">
             {formatCurrency(
               tournament.main_prize_pool_cents + tournament.performance_reward_pool_cents,
               tournament.currency
@@ -175,11 +167,11 @@ export function LiveMatchConsole({
               />
             ) : (
               <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center">
-                <Radio className="w-12 h-12 text-red-500 animate-pulse mb-3" />
+                <Radio className="w-12 h-12 text-brand-crimson animate-pulse mb-3" />
                 <h3 className="font-display text-lg font-bold text-white uppercase">
-                  Match Telemetry Active
+                  Arena Telemetry Active
                 </h3>
-                <p className="text-xs text-gray-400 mt-1 max-w-sm">
+                <p className="text-xs text-gray-400 mt-1 max-w-sm font-sans">
                   OBS stream uplink connecting. Follow the official referee telemetry and live leaderboard below.
                 </p>
               </div>
@@ -190,7 +182,7 @@ export function LiveMatchConsole({
           <div className="rounded-xl bg-surface-100 border border-surface-border p-5 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-surface-border">
               <div className="flex items-center gap-2">
-                <Crosshair className="w-4 h-4 text-red-500" />
+                <Crosshair className="w-4 h-4 text-brand-crimson" />
                 <h3 className="font-display text-base font-bold text-white uppercase tracking-wider">
                   Official Match Event Feed
                 </h3>
@@ -216,8 +208,8 @@ export function LiveMatchConsole({
 
                       {ev.event_type === "PLAYER_KILL" ? (
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="font-bold text-cyan-300">{ev.actor_name}</span>
-                          <span className="text-red-400 font-semibold text-[11px] px-1.5 py-0.5 rounded bg-red-950/40 border border-red-800/40">
+                          <span className="font-bold text-brand-crimsonLight">{ev.actor_name}</span>
+                          <span className="text-brand-crimson font-semibold text-[11px] px-1.5 py-0.5 rounded bg-red-950/40 border border-red-800/40">
                             ELIMINATED
                           </span>
                           <span className="font-bold text-gray-400 line-through">
@@ -231,7 +223,7 @@ export function LiveMatchConsole({
                         </div>
                       ) : ev.event_type === "PLAYER_ELIMINATED" ? (
                         <div className="flex items-center gap-1.5">
-                          <span className="text-red-400 font-bold">{ev.target_name}</span>
+                          <span className="text-brand-crimson font-bold">{ev.target_name}</span>
                           <span className="text-gray-400">
                             finished at #{String(ev.metadata?.placement || "?")}
                           </span>
@@ -258,12 +250,12 @@ export function LiveMatchConsole({
           <div className="rounded-xl bg-surface-100 border border-surface-border p-5 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-surface-border">
               <div className="flex items-center gap-2">
-                <Trophy className="w-4 h-4 text-amber-400" />
+                <Trophy className="w-4 h-4 text-brand-gold" />
                 <h3 className="font-display text-base font-bold text-white uppercase tracking-wider">
                   Live Match Leaderboard
                 </h3>
               </div>
-              <span className="text-xs font-mono text-cyan-400 font-bold">
+              <span className="text-xs font-mono text-brand-gold font-bold">
                 Deterministic Scoring
               </span>
             </div>
@@ -280,53 +272,50 @@ export function LiveMatchConsole({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-surface-border/60">
-                  {sortedLeaderboard.map((p, idx) => {
-                    const isPodium = idx < 3;
-                    return (
-                      <tr
-                        key={p.id}
-                        className={`hover:bg-surface-elevated/60 transition-colors ${
-                          p.is_alive ? "" : "opacity-60"
-                        }`}
-                      >
-                        <td className="py-2.5 px-2 font-bold">
-                          {idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `#${idx + 1}`}
-                        </td>
-                        <td className="py-2.5 px-2">
-                          <div className="flex items-center gap-2">
-                            <img
-                              src={p.avatar_url}
-                              alt={p.participant_name}
-                              className="w-6 h-6 rounded-full object-cover ring-1 ring-surface-border"
-                            />
-                            <div className="leading-tight">
-                              <span className="font-sans font-bold text-white block">
-                                {p.participant_name}
-                              </span>
-                              <span className="text-[10px] text-gray-400">
-                                {p.is_alive ? (
-                                  <span className="text-emerald-400 font-semibold">● Alive</span>
-                                ) : (
-                                  <span className="text-gray-500">
-                                    Eliminated {p.placement ? `(#${p.placement})` : ""}
-                                  </span>
-                                )}
-                              </span>
-                            </div>
+                  {sortedLeaderboard.map((p, idx) => (
+                    <tr
+                      key={p.id}
+                      className={`hover:bg-surface-elevated/60 transition-colors ${
+                        p.is_alive ? "" : "opacity-60"
+                      }`}
+                    >
+                      <td className="py-2.5 px-2 font-bold">
+                        {idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `#${idx + 1}`}
+                      </td>
+                      <td className="py-2.5 px-2">
+                        <div className="flex items-center gap-2">
+                          <img
+                            src={p.avatar_url}
+                            alt={p.participant_name}
+                            className="w-6 h-6 rounded-full object-cover ring-1 ring-surface-border"
+                          />
+                          <div className="leading-tight">
+                            <span className="font-sans font-bold text-white block">
+                              {p.participant_name}
+                            </span>
+                            <span className="text-[10px] text-gray-400">
+                              {p.is_alive ? (
+                                <span className="text-brand-emerald font-semibold">● In Combat</span>
+                              ) : (
+                                <span className="text-gray-500">
+                                  Eliminated {p.placement ? `(#${p.placement})` : ""}
+                                </span>
+                              )}
+                            </span>
                           </div>
-                        </td>
-                        <td className="py-2.5 px-2 text-center font-bold text-amber-400">
-                          {p.kills}
-                        </td>
-                        <td className="py-2.5 px-2 text-center text-gray-300">
-                          {p.placement_points}
-                        </td>
-                        <td className="py-2.5 px-2 text-right font-black text-cyan-400 text-sm">
-                          {p.total_score}
-                        </td>
-                      </tr>
-                    );
-                  })}
+                        </div>
+                      </td>
+                      <td className="py-2.5 px-2 text-center font-bold text-brand-crimson">
+                        {p.kills}
+                      </td>
+                      <td className="py-2.5 px-2 text-center text-gray-300">
+                        {p.placement_points}
+                      </td>
+                      <td className="py-2.5 px-2 text-right font-black text-brand-gold text-sm">
+                        {p.total_score}
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>

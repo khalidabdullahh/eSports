@@ -13,7 +13,7 @@ export default function DisputesPublicPage() {
       </Link>
 
       <div className="rounded-2xl bg-surface-100 border border-surface-border p-6 sm:p-8 space-y-6">
-        <div className="flex items-center gap-2 text-amber-400 text-xs font-mono">
+        <div className="flex items-center gap-2 text-brand-gold text-xs font-mono">
           <AlertTriangle className="w-4 h-4" />
           <span>PLAYER PROTECTIONS & INTEGRITY</span>
         </div>
@@ -21,9 +21,9 @@ export default function DisputesPublicPage() {
           Dispute Resolution Center
         </h1>
 
-        <div className="space-y-4 text-xs text-gray-300 leading-relaxed">
+        <div className="space-y-4 text-xs text-gray-300 leading-relaxed font-sans">
           <p>
-            NexusOps provides an open 15-minute dispute window immediately following the submission of match results by official referees.
+            AreNex provides an open 15-minute dispute window immediately following the submission of match results by official referees.
           </p>
           <p>
             If you experience a discrepancy with your recorded kills or final placement, you can file a formal ticket with screenshot or video proof.
@@ -31,7 +31,7 @@ export default function DisputesPublicPage() {
           <div className="pt-4 flex items-center gap-3">
             <Link
               href="/admin/disputes"
-              className="px-5 py-2.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-black font-bold text-xs uppercase font-mono tracking-wider flex items-center gap-2"
+              className="px-5 py-2.5 rounded-lg bg-brand-crimson hover:bg-brand-crimsonDark text-white font-bold text-xs uppercase font-display tracking-wider flex items-center gap-2 shadow-md shadow-brand-crimson/25"
             >
               <span>Go to Dispute Management Desk</span>
               <ArrowRight className="w-3.5 h-3.5" />

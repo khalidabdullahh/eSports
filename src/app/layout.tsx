@@ -5,14 +5,25 @@ import { MobileNav } from "@/components/mobile-nav";
 import { Footer } from "@/components/footer";
 
 export const metadata: Metadata = {
-  title: "NexusOps — Premium Dark Esports Tournament Platform",
+  title: "ARENEX — Where Players Compete. Legends Rise.",
   description:
-    "Join, compete, perform, and earn in high-stakes Free Fire and multi-game esports tournaments with real-time referee telemetry, automated financial ledger tracking, and instant verifiable payouts.",
+    "AreNex (Arena + Next) is a next-generation competitive esports tournament platform. Discover tournaments, compete under official referee telemetry, build your verified record, and rise through performance.",
+  keywords: [
+    "AreNex",
+    "Esports Tournament Platform",
+    "Free Fire Tournament",
+    "Competitive Gaming",
+    "Battle Royale Cups",
+    "Esports Bangladesh",
+    "Live Match Telemetry",
+    "bKash Esports Payouts",
+  ],
   openGraph: {
-    title: "NexusOps — Premium Dark Esports Tournament Platform",
+    title: "ARENEX — Where Players Compete. Legends Rise.",
     description:
-      "Automated deterministic scoring, live referee telemetry, protected room credentials, and transparent prize pools.",
+      "A next-generation competitive arena where players compete, prove their skill, build their reputation, and rise toward greatness.",
     type: "website",
+    siteName: "ARENEX",
   },
 };
 
@@ -23,7 +34,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <body className="min-h-screen flex flex-col bg-background text-gray-100 antialiased selection:bg-cyan-500 selection:text-black font-sans">
+      <body className="min-h-screen flex flex-col bg-background text-gray-100 antialiased selection:bg-brand-crimson selection:text-white font-sans">
         <Navbar />
         <main className="flex-1 w-full">{children}</main>
         <Footer />
