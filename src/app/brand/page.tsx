@@ -114,7 +114,7 @@ export default function BrandGuidelinesPage() {
         <div className="flex items-center gap-3">
           <div className="p-3 rounded-xl bg-surface-100 border border-surface-border text-xs font-mono">
             <span className="text-gray-400 block">Version</span>
-            <span className="text-white font-bold">2.0 • Production</span>
+            <span className="text-white font-bold">v1.02 • Production</span>
           </div>
           <div className="p-3 rounded-xl bg-surface-100 border border-surface-border text-xs font-mono">
             <span className="text-gray-400 block">Tagline</span>

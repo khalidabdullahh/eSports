@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Radio, Shield, User, ChevronRight, Sparkles } from "lucide-react";
 import { Badge } from "./ui/badge";
 import { RoleSwitcher } from "./ui/role-switcher";
+import { ThemeToggle } from "./ui/theme-toggle";
 import { ArenexLogo } from "./brand/arenex-logo";
 import { dataStore } from "@/lib/store";
 
@@ -69,8 +70,10 @@ export function Navbar() {
           </nav>
         </div>
 
-        {/* Right side controls */}
         <div className="flex items-center gap-3">
+          {/* Theme Toggle (Dark / Light) */}
+          <ThemeToggle />
+
           {/* Quick Role Switcher for Pairing & Review */}
           <RoleSwitcher currentUserId={currentUser.id} profiles={profiles} />
 

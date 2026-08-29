@@ -180,6 +180,9 @@ export function Footer() {
         <div className="border-t border-surface-border/60 mt-12 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-500">
           <p>© 2026 ARENEX. All rights reserved. Where Players Compete. Legends Rise.</p>
           <div className="flex items-center gap-4">
+            <span className="px-2 py-0.5 rounded bg-surface-200 border border-surface-border text-[10px] font-mono text-brand-crimson font-bold uppercase tracking-wider">
+              Release v1.02
+            </span>
             <span className="flex items-center gap-1.5 font-mono text-[11px]">
               <span className="w-2 h-2 rounded-full bg-brand-emerald animate-pulse"></span>
               Arena Systems Active

@@ -2,35 +2,155 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================
+   ARENEX THEME ENGINE: DUAL DARK & LIGHT PALETTES
+   ============================================================ */
+
 :root {
-  --background: #080b11;
+  --background: #f8fafc;
+  --foreground: #0f172a;
+}
+
+.dark {
+  --background: #07090e;
   --foreground: #f3f4f6;
 }
 
 body {
   color: var(--foreground);
-  background: var(--background);
+  background-color: var(--background);
   font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
   overflow-x: hidden;
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
-/* Custom esports scrollbar */
+/* ============================================================
+   LIGHT MODE CONTRAST & SURFACE SYSTEM
+   Ensures 100% readability without white-on-white text
+   ============================================================ */
+
+html:not(.dark) body {
+  background-color: #f8fafc;
+  color: #0f172a;
+}
+
+/* Light Mode Background Overrides */
+html:not(.dark) .bg-background {
+  background-color: #f8fafc !important;
+}
+
+html:not(.dark) .bg-surface-100 {
+  background-color: #ffffff !important;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
+}
+
+html:not(.dark) .bg-surface-200 {
+  background-color: #f1f5f9 !important;
+}
+
+html:not(.dark) .bg-surface-300 {
+  background-color: #e2e8f0 !important;
+}
+
+html:not(.dark) .bg-surface-elevated {
+  background-color: #ffffff !important;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04);
+}
+
+html:not(.dark) .border-surface-border {
+  border-color: #e2e8f0 !important;
+}
+
+html:not(.dark) .border-surface-borderLight {
+  border-color: #cbd5e1 !important;
+}
+
+/* Light Mode High-Contrast Typography */
+html:not(.dark) h1.text-white,
+html:not(.dark) h2.text-white,
+html:not(.dark) h3.text-white,
+html:not(.dark) h4.text-white,
+html:not(.dark) h5.text-white,
+html:not(.dark) p.text-white,
+html:not(.dark) td.text-white,
+html:not(.dark) th.text-white,
+html:not(.dark) span.text-white:not([class*="bg-"]):not(button *),
+html:not(.dark) div.text-white:not([class*="bg-"]):not(button *) {
+  color: #0f172a !important;
+}
+
+html:not(.dark) .text-gray-100:not(button *):not([class*="bg-"]) {
+  color: #0f172a !important;
+}
+
+html:not(.dark) .text-gray-200:not(button *):not([class*="bg-"]) {
+  color: #1e293b !important;
+}
+
+html:not(.dark) .text-gray-300:not(button *):not([class*="bg-"]) {
+  color: #334155 !important;
+}
+
+html:not(.dark) .text-gray-400:not(button *):not([class*="bg-"]) {
+  color: #475569 !important;
+}
+
+html:not(.dark) .text-gray-500:not(button *):not([class*="bg-"]) {
+  color: #64748b !important;
+}
+
+/* Preserves White Text on Colored Accent Elements in Light Mode */
+html:not(.dark) button.bg-brand-crimson,
+html:not(.dark) button.bg-brand-crimson *,
+html:not(.dark) .bg-brand-crimson,
+html:not(.dark) .bg-brand-crimson *,
+html:not(.dark) .bg-red-600,
+html:not(.dark) .bg-red-600 *,
+html:not(.dark) [class*="bg-brand-crimson"] *,
+html:not(.dark) [class*="bg-red-600"] * {
+  color: #ffffff !important;
+}
+
+/* Light Mode Input & Form High Contrast */
+html:not(.dark) input,
+html:not(.dark) select,
+html:not(.dark) textarea {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+
+html:not(.dark) input::placeholder,
+html:not(.dark) textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
-::-webkit-scrollbar-track {
+.dark ::-webkit-scrollbar-track {
   background: #0b0f19;
 }
 
-::-webkit-scrollbar-thumb {
+html:not(.dark) ::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+.dark ::-webkit-scrollbar-thumb {
   background: #1e2738;
   border-radius: 3px;
 }
 
+html:not(.dark) ::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
 ::-webkit-scrollbar-thumb:hover {
-  background: #2e3d5c;
+  background: #ff1e44;
 }
 
 /* Tabular numbers for live scoreboards */
