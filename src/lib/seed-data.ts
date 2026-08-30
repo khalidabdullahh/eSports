@@ -17,11 +17,11 @@ import {
 export const SEED_PROFILES: Profile[] = [
   {
     id: "user-admin-1",
-    username: "apex_director",
-    display_name: "Apex Director",
+    username: "khalid_abdullah",
+    display_name: "Khalid Abdullah",
     avatar_url: "https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=150&auto=format&fit=crop&q=80",
     free_fire_uid: "8821940182",
-    in_game_name: "DIRECTOR亗",
+    in_game_name: "KHALID亗ARENEX",
     role: "SUPER_ADMIN",
     country: "BD",
     is_banned: false,
@@ -476,7 +476,7 @@ export const INITIAL_AUDIT_LOGS: AuditLog[] = [
   {
     id: "aud-1",
     actor_user_id: "user-admin-1",
-    actor_name: "Apex Director",
+    actor_name: "Khalid Abdullah",
     action: "TOURNAMENT_PUBLISHED",
     entity_type: "tournament",
     entity_id: DEMO_TOURNAMENT_ID,
@@ -496,7 +496,7 @@ export const INITIAL_AUDIT_LOGS: AuditLog[] = [
   {
     id: "aud-3",
     actor_user_id: "user-admin-1",
-    actor_name: "Apex Director",
+    actor_name: "Khalid Abdullah",
     action: "ROOM_CREDENTIALS_PROVISIONED",
     entity_type: "room_credential",
     entity_id: "room-cred-night-battle",

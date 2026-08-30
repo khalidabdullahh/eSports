@@ -41,53 +41,101 @@ body {
 }
 
 /* ============================================================
-   LIGHT MODE CONTRAST ADAPTATION & ACCENT PROTECTIONS
+   LIGHT MODE CONTRAST & TYPOGRAPHY SYSTEM
+   Eliminates all washed-out text and ensures 100% readability
    ============================================================ */
 
-/* Light mode card elevations */
+html:not(.dark) {
+  color-scheme: light;
+}
+
+html:not(.dark) body {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+/* Light mode card elevations & backgrounds */
 html:not(.dark) .bg-surface-100 {
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05) !important;
+}
+
+html:not(.dark) .bg-surface-200 {
+  background-color: #f1f5f9 !important;
+  border-color: #e2e8f0 !important;
+}
+
+html:not(.dark) .bg-surface-300 {
+  background-color: #e2e8f0 !important;
+  border-color: #cbd5e1 !important;
 }
 
 html:not(.dark) .bg-surface-elevated {
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.04) !important;
 }
 
-/* Light mode text contrast overrides for structural text */
-html:not(.dark) h1.text-white,
-html:not(.dark) h2.text-white,
-html:not(.dark) h3.text-white,
-html:not(.dark) h4.text-white,
-html:not(.dark) h5.text-white,
-html:not(.dark) p.text-white,
-html:not(.dark) td.text-white,
-html:not(.dark) th.text-white,
-html:not(.dark) span.text-white:not([class*="bg-"]):not(button *):not(a.bg-brand-crimson *),
-html:not(.dark) div.text-white:not([class*="bg-"]):not(button *):not(a.bg-brand-crimson *) {
+html:not(.dark) .border-surface-border {
+  border-color: #e2e8f0 !important;
+}
+
+html:not(.dark) .border-surface-borderLight {
+  border-color: #cbd5e1 !important;
+}
+
+/* Structural Headings in Light Mode */
+html:not(.dark) h1:not([class*="bg-brand-crimson"] *):not([class*="bg-red-"] *),
+html:not(.dark) h2:not([class*="bg-brand-crimson"] *):not([class*="bg-red-"] *),
+html:not(.dark) h3:not([class*="bg-brand-crimson"] *):not([class*="bg-red-"] *),
+html:not(.dark) h4:not([class*="bg-brand-crimson"] *):not([class*="bg-red-"] *),
+html:not(.dark) h5:not([class*="bg-brand-crimson"] *):not([class*="bg-red-"] *),
+html:not(.dark) h6:not([class*="bg-brand-crimson"] *):not([class*="bg-red-"] *) {
   color: #0f172a !important;
 }
 
-html:not(.dark) .text-gray-100:not(button *):not([class*="bg-"]) {
+/* Preserve Transparent Gradient Text */
+html:not(.dark) .text-transparent {
+  color: transparent !important;
+}
+
+/* High-Contrast Text Mapping in Light Mode */
+html:not(.dark) .text-white:not([class*="bg-brand-crimson"] *):not([class*="bg-red-"] *):not(button.bg-brand-crimson *):not(a.bg-brand-crimson *):not(.text-transparent) {
   color: #0f172a !important;
 }
 
-html:not(.dark) .text-gray-200:not(button *):not([class*="bg-"]) {
+html:not(.dark) .text-gray-100:not([class*="bg-brand-crimson"] *):not([class*="bg-red-"] *) {
+  color: #0f172a !important;
+}
+
+html:not(.dark) .text-gray-200:not([class*="bg-brand-crimson"] *):not([class*="bg-red-"] *):not(button.bg-brand-crimson *):not(a.bg-brand-crimson *) {
   color: #1e293b !important;
 }
 
-html:not(.dark) .text-gray-300:not(button *):not([class*="bg-"]) {
+html:not(.dark) .text-gray-300:not([class*="bg-brand-crimson"] *):not([class*="bg-red-"] *):not(button.bg-brand-crimson *):not(a.bg-brand-crimson *) {
   color: #334155 !important;
 }
 
-html:not(.dark) .text-gray-400:not(button *):not([class*="bg-"]) {
+html:not(.dark) .text-gray-400:not([class*="bg-brand-crimson"] *):not([class*="bg-red-"] *):not(button.bg-brand-crimson *):not(a.bg-brand-crimson *) {
   color: #475569 !important;
 }
 
-html:not(.dark) .text-gray-500:not(button *):not([class*="bg-"]) {
+html:not(.dark) .text-gray-500:not([class*="bg-brand-crimson"] *):not([class*="bg-red-"] *):not(button.bg-brand-crimson *):not(a.bg-brand-crimson *) {
   color: #64748b !important;
 }
 
-/* CRITICAL: Preserves pure white text on Crimson CTA buttons & badges */
+/* Table Text in Light Mode */
+html:not(.dark) td,
+html:not(.dark) th {
+  color: #0f172a !important;
+}
+
+html:not(.dark) thead th {
+  color: #475569 !important;
+}
+
+/* CRITICAL: Preserves Pure White Text on Crimson / Red Action Elements */
 html:not(.dark) [class*="bg-brand-crimson"],
 html:not(.dark) [class*="bg-brand-crimson"] *,
 html:not(.dark) [class*="bg-red-600"],
@@ -95,11 +143,13 @@ html:not(.dark) [class*="bg-red-600"] *,
 html:not(.dark) button.bg-brand-crimson,
 html:not(.dark) button.bg-brand-crimson *,
 html:not(.dark) a.bg-brand-crimson,
-html:not(.dark) a.bg-brand-crimson * {
+html:not(.dark) a.bg-brand-crimson *,
+html:not(.dark) .group:hover .group-hover\:text-white,
+html:not(.dark) .group:hover .group-hover\:bg-brand-crimson * {
   color: #ffffff !important;
 }
 
-/* Light mode form inputs */
+/* Light mode form inputs & selects */
 html:not(.dark) input,
 html:not(.dark) select,
 html:not(.dark) textarea {
@@ -113,9 +163,22 @@ html:not(.dark) textarea::placeholder {
   color: #94a3b8 !important;
 }
 
+/* Secondary Button Contrast in Light Mode */
+html:not(.dark) a.bg-surface-elevated,
+html:not(.dark) button.bg-surface-elevated {
+  color: #1e293b !important;
+  border-color: #cbd5e1 !important;
+}
+
+html:not(.dark) a.bg-surface-elevated:hover,
+html:not(.dark) button.bg-surface-elevated:hover {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
 /* Table row hover in light mode */
 html:not(.dark) tr:hover {
-  background-color: rgba(241, 245, 249, 0.7) !important;
+  background-color: rgba(241, 245, 249, 0.9) !important;
 }
 
 /* Custom esports scrollbar */

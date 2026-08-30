@@ -58,6 +58,12 @@ export default function AdminDashboardPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href="/"
+            className="px-3.5 py-2 rounded-lg bg-surface-elevated hover:bg-surface-50 text-gray-400 hover:text-white border border-surface-border font-semibold text-xs uppercase tracking-wider flex items-center gap-1.5 transition-all font-display"
+          >
+            ← View Public Site
+          </Link>
           {liveTournament && (
             <Link
               href={`/admin/referee/match-night-battle-round-1`}

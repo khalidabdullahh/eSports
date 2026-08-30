@@ -50,7 +50,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="min-h-screen flex flex-col bg-background text-gray-100 antialiased selection:bg-brand-crimson selection:text-white font-sans">
+      <body className="min-h-screen flex flex-col bg-background text-slate-900 dark:text-gray-100 antialiased selection:bg-brand-crimson selection:text-white font-sans">
         <Navbar />
         <main className="flex-1 w-full">{children}</main>
         <Footer />

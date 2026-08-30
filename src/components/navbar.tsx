@@ -93,8 +93,8 @@ export function Navbar() {
                 <User className="w-3.5 h-3.5 text-gray-300" />
               </div>
             )}
-            <span className="text-xs font-medium text-gray-200 hidden sm:inline max-w-[100px] truncate">
-              {currentUser.display_name}
+            <span className="text-xs font-medium text-gray-200 hidden sm:inline max-w-[110px] truncate">
+              {currentUser.role === "SUPER_ADMIN" ? "Khalid Abdullah" : "Dashboard"}
             </span>
             <ChevronRight className="w-3 h-3 text-gray-500" />
           </Link>

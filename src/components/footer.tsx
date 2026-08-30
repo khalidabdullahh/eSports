@@ -173,12 +173,30 @@ export function Footer() {
                   Support & Tickets
                 </Link>
               </li>
+              <li>
+                <Link href="/developer" className="text-brand-gold hover:text-white font-semibold transition-colors">
+                  Developer & Architect Profile
+                </Link>
+              </li>
             </ul>
           </div>
         </div>
 
-        <div className="border-t border-surface-border/60 mt-12 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-500">
-          <p>© 2026 ARENEX. All rights reserved. Where Players Compete. Legends Rise.</p>
+        <div className="border-t border-surface-border/60 mt-12 pt-6 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-gray-500">
+          <div className="flex flex-col sm:flex-row items-center gap-2 text-center sm:text-left">
+            <p>© 2026 ARENEX. All rights reserved.</p>
+            <span className="hidden sm:inline text-gray-600">•</span>
+            <p className="text-gray-400">
+              Architected & Developed by{" "}
+              <Link
+                href="/developer"
+                className="text-white hover:text-brand-crimsonLight font-semibold transition-colors underline decoration-brand-crimson/50 underline-offset-2"
+              >
+                Khalid Abdullah
+              </Link>
+            </p>
+          </div>
+
           <div className="flex items-center gap-4">
             <span className="px-2 py-0.5 rounded bg-surface-200 border border-surface-border text-[10px] font-mono text-brand-crimson font-bold uppercase tracking-wider">
               Release v1.02
