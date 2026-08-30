@@ -166,6 +166,17 @@ class EsportsDataStore {
     );
   }
 
+  addTournament(tournament: Tournament): Tournament {
+    this.tournaments.set(tournament.id, tournament);
+    this.logAudit({
+      action: "TOURNAMENT_CREATED",
+      entity_type: "tournament",
+      entity_id: tournament.id,
+      metadata: { title: tournament.title, entry_fee_cents: tournament.entry_fee_cents },
+    });
+    return tournament;
+  }
+
   updateTournamentStatus(tournamentId: string, nextStatus: TournamentStatus): Tournament {
     const tournament = this.tournaments.get(tournamentId);
     if (!tournament) throw new Error("Tournament not found");

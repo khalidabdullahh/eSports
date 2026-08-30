@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { TournamentService } from "@/lib/services/tournament-service";
+import { createClient } from "@/lib/supabase/server";
 import { dataStore } from "@/lib/store";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -25,15 +27,22 @@ export default async function TournamentDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const tournament = dataStore.getTournament(id);
+  const tournament = await TournamentService.getTournamentById(id);
 
   if (!tournament) {
     notFound();
   }
 
+  const supabase = await createClient();
+  const {
+    data: { user: authUser },
+  } = await supabase.auth.getUser();
+
   const currentUser = dataStore.getCurrentUser();
+  const activeUserId = authUser?.id || currentUser.id;
+
   const registrations = dataStore.getRegistrations(tournament.id);
-  const userRegistration = registrations.find((r) => r.user_id === currentUser.id);
+  const userRegistration = registrations.find((r) => r.user_id === activeUserId);
 
   const totalPrizeCents =
     tournament.main_prize_pool_cents + tournament.performance_reward_pool_cents;

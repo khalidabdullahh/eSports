@@ -35,6 +35,7 @@ export default function TournamentRegisterPage() {
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [registeredSlot, setRegisteredSlot] = useState<number | null>(null);
+  const [registeredId, setRegisteredId] = useState<string | null>(null);
 
   const entryFeeCents = 5000; // ৳50.00
   const bKashNumber = "01712-345678 (Merchant / Personal)";
@@ -54,6 +55,7 @@ export default function TournamentRegisterPage() {
         return;
       }
       setRegisteredSlot(res.registration?.slot_number || 49);
+      setRegisteredId(res.registration?.id || null);
       setStep("payment");
     });
   };
@@ -69,7 +71,7 @@ export default function TournamentRegisterPage() {
     startTransition(async () => {
       const res = await submitPaymentAction(
         tournamentId,
-        `reg-${tournamentId}`,
+        registeredId || `reg-${tournamentId}`,
         entryFeeCents,
         paymentMethod,
         transactionId.trim(),

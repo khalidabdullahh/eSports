@@ -82,6 +82,13 @@ export default function AdminDashboardPage() {
             </Link>
           )}
           <Link
+            href="/admin/tournaments"
+            className="px-3.5 py-2 rounded-lg bg-surface-elevated hover:bg-surface-50 text-slate-800 dark:text-gray-200 hover:text-slate-950 dark:hover:text-white border border-surface-border font-semibold text-xs uppercase tracking-wider flex items-center gap-1.5 transition-all font-display"
+          >
+            <Trophy className="w-3.5 h-3.5 text-brand-gold" />
+            Tournaments
+          </Link>
+          <Link
             href="/admin/finance/payments"
             className="px-4 py-2 rounded-lg bg-surface-elevated hover:bg-surface-50 text-gray-200 hover:text-white border border-surface-border font-semibold text-xs uppercase tracking-wider flex items-center gap-1.5 transition-all font-display"
           >
