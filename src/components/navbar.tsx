@@ -1,20 +1,40 @@
 import Link from "next/link";
-import { Radio, Shield, User, ChevronRight, Sparkles } from "lucide-react";
+import { Radio, Shield, User, ChevronRight, Sparkles, LogIn } from "lucide-react";
 import { Badge } from "./ui/badge";
 import { AdminAccessButton } from "./admin-access-button";
 import { ThemeToggle } from "./ui/theme-toggle";
 import { ArenexLogo } from "./brand/arenex-logo";
 import { dataStore } from "@/lib/store";
+import { createClient } from "@/lib/supabase/server";
 
-export function Navbar() {
-  const currentUser = dataStore.getCurrentUser();
+export async function Navbar() {
+  const supabase = await createClient();
+  const {
+    data: { user: authUser },
+  } = await supabase.auth.getUser();
 
-  const isStaff =
-    currentUser.role === "SUPER_ADMIN" ||
-    currentUser.role === "OWNER" ||
-    currentUser.role === "TOURNAMENT_ADMIN" ||
-    currentUser.role === "REFEREE" ||
-    currentUser.role === "FINANCE_ADMIN";
+  let displayName = "Dashboard";
+  let avatarUrl: string | undefined = undefined;
+  let userRole = "USER";
+
+  if (authUser) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("display_name, avatar_url, role")
+      .eq("id", authUser.id)
+      .single();
+
+    if (profile) {
+      displayName = profile.display_name || "Warrior";
+      avatarUrl = profile.avatar_url;
+      userRole = profile.role;
+    }
+  } else {
+    const currentUser = dataStore.getCurrentUser();
+    displayName = currentUser.role === "SUPER_ADMIN" ? "Khalid Abdullah" : "Dashboard";
+    avatarUrl = currentUser.avatar_url;
+    userRole = currentUser.role;
+  }
 
   return (
     <header className="sticky top-0 z-50 w-full bg-surface-200/95 backdrop-blur-md border-b border-surface-border">
@@ -75,29 +95,47 @@ export function Navbar() {
           <ThemeToggle />
 
           {/* Dedicated Admin Portal Access */}
-          <AdminAccessButton currentRole={currentUser.role} />
+          <AdminAccessButton currentRole={userRole} />
 
-          {/* User Profile Pill */}
-          <Link
-            href="/dashboard"
-            className="flex items-center gap-2 pl-2 pr-3 py-1 rounded-full bg-surface-elevated hover:bg-surface-50 border border-surface-border transition-all"
-          >
-            {currentUser.avatar_url ? (
-              <img
-                src={currentUser.avatar_url}
-                alt={currentUser.display_name}
-                className="w-6 h-6 rounded-full object-cover ring-1 ring-brand-crimson/50"
-              />
-            ) : (
-              <div className="w-6 h-6 rounded-full bg-surface-border flex items-center justify-center">
-                <User className="w-3.5 h-3.5 text-gray-300" />
-              </div>
-            )}
-            <span className="text-xs font-semibold text-slate-800 dark:text-gray-200 hidden sm:inline max-w-[110px] truncate">
-              {currentUser.role === "SUPER_ADMIN" ? "Khalid Abdullah" : "Dashboard"}
-            </span>
-            <ChevronRight className="w-3 h-3 text-gray-500" />
-          </Link>
+          {/* User Profile Pill or Sign In Button */}
+          {authUser ? (
+            <Link
+              href="/dashboard"
+              className="flex items-center gap-2 pl-2 pr-3 py-1 rounded-full bg-surface-elevated hover:bg-surface-50 border border-surface-border transition-all shadow-sm"
+            >
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt={displayName}
+                  className="w-6 h-6 rounded-full object-cover ring-1 ring-brand-crimson/50"
+                />
+              ) : (
+                <div className="w-6 h-6 rounded-full bg-surface-border flex items-center justify-center">
+                  <User className="w-3.5 h-3.5 text-gray-300" />
+                </div>
+              )}
+              <span className="text-xs font-semibold text-slate-800 dark:text-gray-200 hidden sm:inline max-w-[110px] truncate">
+                {displayName}
+              </span>
+              <ChevronRight className="w-3 h-3 text-gray-500" />
+            </Link>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Link
+                href="/login"
+                className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-surface-elevated hover:bg-surface-50 border border-surface-border text-slate-800 dark:text-gray-300 hover:text-slate-950 dark:hover:text-white transition-all font-display uppercase tracking-wider shadow-sm"
+              >
+                <LogIn className="w-3.5 h-3.5 text-brand-crimson" />
+                <span>Sign In</span>
+              </Link>
+              <Link
+                href="/signup"
+                className="hidden sm:inline-flex items-center gap-1 text-xs font-semibold px-3.5 py-1.5 rounded-lg bg-brand-crimson hover:bg-brand-crimsonDark text-white transition-all font-display uppercase tracking-wider shadow-sm"
+              >
+                <span>Register</span>
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </header>
