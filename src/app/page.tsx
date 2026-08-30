@@ -50,7 +50,7 @@ export default function HomePage() {
                   </span>
                 </div>
 
-                <h1 className="font-display text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-white uppercase leading-[1.02]">
+                <h1 className="font-display text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-slate-900 dark:text-white uppercase leading-[1.02]">
                   WHERE PLAYERS <br />
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-crimson via-red-400 to-brand-gold">
                     COMPETE.
@@ -59,7 +59,7 @@ export default function HomePage() {
                 </h1>
               </div>
 
-              <p className="text-base sm:text-lg text-gray-300 max-w-xl leading-relaxed font-sans">
+              <p className="text-base sm:text-lg text-slate-700 dark:text-gray-300 max-w-xl leading-relaxed font-sans font-medium">
                 Discover tournaments. Compete. Build your competitive record. Rise through verifiable performance in a next-generation digital arena.
               </p>
 
@@ -74,7 +74,7 @@ export default function HomePage() {
                 </Link>
                 <Link
                   href="/live"
-                  className="px-7 py-3.5 rounded-lg bg-surface-elevated hover:bg-surface-50 text-gray-200 hover:text-white border border-surface-border hover:border-brand-crimson/50 font-display font-semibold text-sm tracking-wider uppercase transition-all flex items-center gap-2.5"
+                  className="px-7 py-3.5 rounded-lg bg-surface-elevated hover:bg-surface-50 text-slate-900 dark:text-gray-200 hover:text-brand-crimson dark:hover:text-white border border-surface-border hover:border-brand-crimson/50 font-display font-bold text-sm tracking-wider uppercase transition-all flex items-center gap-2.5 shadow-sm"
                 >
                   <Radio className="w-4 h-4 text-brand-crimson animate-pulse" />
                   Watch Live
@@ -84,7 +84,7 @@ export default function HomePage() {
               {/* Brand Stats Row */}
               <div className="grid grid-cols-3 gap-3.5 pt-4 max-w-lg">
                 <div className="p-3.5 rounded-xl bg-surface-200/90 border border-surface-border">
-                  <span className="text-[10px] uppercase font-mono tracking-wider text-gray-400 block">
+                  <span className="text-[10px] uppercase font-mono tracking-wider text-slate-600 dark:text-gray-400 font-semibold block">
                     Verified Payouts
                   </span>
                   <span className="font-display text-xl sm:text-2xl font-black text-brand-gold">
@@ -92,15 +92,15 @@ export default function HomePage() {
                   </span>
                 </div>
                 <div className="p-3.5 rounded-xl bg-surface-200/90 border border-surface-border">
-                  <span className="text-[10px] uppercase font-mono tracking-wider text-gray-400 block">
+                  <span className="text-[10px] uppercase font-mono tracking-wider text-slate-600 dark:text-gray-400 font-semibold block">
                     Active Warriors
                   </span>
-                  <span className="font-display text-xl sm:text-2xl font-black text-white">
+                  <span className="font-display text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
                     12,850+
                   </span>
                 </div>
                 <div className="p-3.5 rounded-xl bg-surface-200/90 border border-surface-border">
-                  <span className="text-[10px] uppercase font-mono tracking-wider text-gray-400 block">
+                  <span className="text-[10px] uppercase font-mono tracking-wider text-slate-600 dark:text-gray-400 font-semibold block">
                     Fair Play Index
                   </span>
                   <span className="font-display text-xl sm:text-2xl font-black text-brand-emerald">
@@ -132,19 +132,19 @@ export default function HomePage() {
                       </span>
                     </div>
 
-                    <h2 className="font-display text-2xl sm:text-3xl font-black text-white uppercase tracking-tight">
+                    <h2 className="font-display text-2xl sm:text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
                       {liveTournament.title}
                     </h2>
-                    <p className="text-xs text-gray-400 mt-1">{liveTournament.mode}</p>
+                    <p className="text-xs text-slate-600 dark:text-gray-400 mt-1 font-medium">{liveTournament.mode}</p>
                   </div>
 
                   {/* Guaranteed Prize Pool Breakdown */}
                   <div className="p-4 rounded-xl bg-surface-200/90 border border-surface-border mb-5">
                     <div className="flex justify-between items-center mb-1">
-                      <span className="text-xs text-gray-400 uppercase font-mono tracking-wider">
+                      <span className="text-xs text-slate-600 dark:text-gray-400 uppercase font-mono tracking-wider font-semibold">
                         Total Arena Pool
                       </span>
-                      <span className="text-xs font-mono text-brand-emerald font-semibold">
+                      <span className="text-xs font-mono text-brand-emerald font-bold">
                         Deterministic
                       </span>
                     </div>
@@ -158,16 +158,16 @@ export default function HomePage() {
                         )}
                       </span>
                     </div>
-                    <div className="text-[11px] text-gray-400 font-mono mt-1.5 flex justify-between border-t border-surface-border/50 pt-1.5">
+                    <div className="text-[11px] text-slate-600 dark:text-gray-400 font-mono mt-1.5 flex justify-between border-t border-surface-border/50 pt-1.5">
                       <span>
                         Podium:{" "}
-                        <strong className="text-gray-200">
+                        <strong className="text-slate-900 dark:text-gray-200 font-bold">
                           {formatCurrency(liveTournament.main_prize_pool_cents, liveTournament.currency)}
                         </strong>
                       </span>
                       <span>
                         Top Fraggers:{" "}
-                        <strong className="text-gray-200">
+                        <strong className="text-slate-900 dark:text-gray-200 font-bold">
                           {formatCurrency(liveTournament.performance_reward_pool_cents, liveTournament.currency)}
                         </strong>
                       </span>
@@ -176,12 +176,12 @@ export default function HomePage() {
 
                   {/* Slot Progress */}
                   <div className="mb-6">
-                    <div className="flex justify-between text-xs font-mono text-gray-400 mb-1.5">
-                      <span className="flex items-center gap-1.5 text-gray-300">
-                        <Users className="w-3.5 h-3.5 text-gray-400" />
+                    <div className="flex justify-between text-xs font-mono text-slate-600 dark:text-gray-400 mb-1.5 font-semibold">
+                      <span className="flex items-center gap-1.5 text-slate-700 dark:text-gray-300">
+                        <Users className="w-3.5 h-3.5 text-slate-500 dark:text-gray-400" />
                         Arena Capacity
                       </span>
-                      <span className="font-bold text-white">
+                      <span className="font-bold text-slate-900 dark:text-white">
                         {liveTournament.current_participants_count} / {liveTournament.max_participants} Warriors
                       </span>
                     </div>
@@ -201,7 +201,7 @@ export default function HomePage() {
                     </Link>
                     <Link
                       href={`/tournaments/${liveTournament.slug || liveTournament.id}`}
-                      className="w-full py-2.5 rounded-lg bg-surface-elevated hover:bg-surface-50 text-gray-200 font-display font-semibold text-xs uppercase tracking-wider flex items-center justify-center gap-1 border border-surface-border transition-all"
+                      className="w-full py-2.5 rounded-lg bg-surface-elevated hover:bg-surface-50 text-slate-900 dark:text-gray-200 hover:text-brand-crimson dark:hover:text-white font-display font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1 border border-surface-border transition-all shadow-sm"
                     >
                       <span>Cup Rules</span>
                       <ChevronRight className="w-3.5 h-3.5" />

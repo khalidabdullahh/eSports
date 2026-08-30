@@ -30,32 +30,32 @@ export default function AboutPage() {
           <span className="text-xs font-mono font-semibold uppercase tracking-widest text-brand-crimson">
             Brand Origin & Manifesto
           </span>
-          <h1 className="font-display text-4xl sm:text-5xl font-black text-white uppercase tracking-tight mt-1">
+          <h1 className="font-display text-4xl sm:text-5xl font-black text-slate-900 dark:text-white uppercase tracking-tight mt-1">
             Arena + Next = AreNex
           </h1>
-          <p className="text-base sm:text-lg text-gray-300 mt-3 leading-relaxed font-sans">
+          <p className="text-base sm:text-lg text-slate-700 dark:text-gray-300 mt-3 leading-relaxed font-sans font-medium">
             A digital arena where players compete, prove their skill, build their reputation, and rise toward greatness.
           </p>
         </div>
       </div>
 
       {/* The Brand Story */}
-      <section className="p-8 sm:p-12 rounded-2xl bg-surface-100 border border-surface-border space-y-6">
+      <section className="p-8 sm:p-12 rounded-2xl bg-surface-100 border border-surface-border space-y-6 shadow-xl">
         <div className="border-l-2 border-brand-crimson pl-4">
           <span className="text-xs font-mono font-semibold text-brand-crimson uppercase tracking-wider block">
             The Narrative
           </span>
-          <h2 className="font-display text-2xl sm:text-3xl font-black text-white uppercase mt-0.5">
+          <h2 className="font-display text-2xl sm:text-3xl font-black text-slate-900 dark:text-white uppercase mt-0.5">
             The AreNex Story
           </h2>
         </div>
 
-        <div className="space-y-4 text-sm sm:text-base text-gray-300 leading-relaxed font-sans">
+        <div className="space-y-4 text-sm sm:text-base text-slate-700 dark:text-gray-300 leading-relaxed font-sans">
           <p>
             Gaming has always been competitive. From local cyber cafes to mobile squad scrims, millions of players drop into battlegrounds with the singular ambition to prove their reflex, tactics, and will to win.
           </p>
-          <p className="text-white font-medium text-lg font-display tracking-wide border-y border-surface-border/80 py-4 my-2">
-            "But competition needs a stage. A place where skill can be tested. Where performance can be recognized. Where victories matter. Where players can build an authentic name."
+          <p className="text-slate-900 dark:text-white font-semibold text-lg font-display tracking-wide border-y border-surface-border/80 py-4 my-2">
+            &ldquo;But competition needs a stage. A place where skill can be tested. Where performance can be recognized. Where victories matter. Where players can build an authentic name.&rdquo;
           </p>
           <p>
             AreNex is that arena. We believe gaming becomes profoundly more meaningful when every kill, every placement, and every strategic sacrifice is measured accurately, remembered permanently, and rewarded fairly.

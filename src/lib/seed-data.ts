@@ -19,7 +19,7 @@ export const SEED_PROFILES: Profile[] = [
     id: "user-admin-1",
     username: "khalid_abdullah",
     display_name: "Khalid Abdullah",
-    avatar_url: "https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=150&auto=format&fit=crop&q=80",
+    avatar_url: "https://avatars.githubusercontent.com/u/191352772?v=4",
     free_fire_uid: "8821940182",
     in_game_name: "KHALID亗ARENEX",
     role: "SUPER_ADMIN",

@@ -56,7 +56,7 @@ export function ThemeToggle({ className, showLabel = false }: ThemeToggleProps) 
       type="button"
       className={cn(
         "relative inline-flex items-center justify-center p-2 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-brand-crimson select-none",
-        "bg-surface-elevated hover:bg-surface-50 border border-surface-border text-gray-300 hover:text-white",
+        "bg-surface-elevated hover:bg-surface-50 border border-surface-border text-slate-800 dark:text-gray-300 hover:text-slate-950 dark:hover:text-white shadow-sm",
         className
       )}
       title={isDark ? "Switch to Light Theme" : "Switch to Dark Esports Theme"}

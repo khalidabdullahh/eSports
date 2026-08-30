@@ -27,13 +27,13 @@ export function Navbar() {
           <nav className="hidden lg:flex items-center gap-1 text-sm font-medium">
             <Link
               href="/tournaments"
-              className="px-3 py-1.5 rounded-md text-gray-300 hover:text-white hover:bg-surface-elevated transition-colors"
+              className="px-3 py-1.5 rounded-md text-slate-800 dark:text-gray-300 hover:text-slate-950 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-surface-elevated font-medium transition-colors"
             >
               Tournaments
             </Link>
             <Link
               href="/live"
-              className="px-3 py-1.5 rounded-md text-gray-300 hover:text-white hover:bg-surface-elevated transition-colors flex items-center gap-1.5"
+              className="px-3 py-1.5 rounded-md text-slate-800 dark:text-gray-300 hover:text-slate-950 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-surface-elevated font-medium transition-colors flex items-center gap-1.5"
             >
               <Radio className="w-3.5 h-3.5 text-brand-crimson animate-pulse" />
               Live Arena
@@ -43,19 +43,19 @@ export function Navbar() {
             </Link>
             <Link
               href="/rankings"
-              className="px-3 py-1.5 rounded-md text-gray-300 hover:text-white hover:bg-surface-elevated transition-colors"
+              className="px-3 py-1.5 rounded-md text-slate-800 dark:text-gray-300 hover:text-slate-950 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-surface-elevated font-medium transition-colors"
             >
               Rankings
             </Link>
             <Link
               href="/teams"
-              className="px-3 py-1.5 rounded-md text-gray-300 hover:text-white hover:bg-surface-elevated transition-colors"
+              className="px-3 py-1.5 rounded-md text-slate-800 dark:text-gray-300 hover:text-slate-950 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-surface-elevated font-medium transition-colors"
             >
               Teams
             </Link>
             <Link
               href="/about"
-              className="px-3 py-1.5 rounded-md text-gray-400 hover:text-gray-200 transition-colors"
+              className="px-3 py-1.5 rounded-md text-slate-700 dark:text-gray-400 hover:text-slate-950 dark:hover:text-gray-200 font-medium transition-colors"
             >
               About
             </Link>
@@ -93,7 +93,7 @@ export function Navbar() {
                 <User className="w-3.5 h-3.5 text-gray-300" />
               </div>
             )}
-            <span className="text-xs font-medium text-gray-200 hidden sm:inline max-w-[110px] truncate">
+            <span className="text-xs font-semibold text-slate-800 dark:text-gray-200 hidden sm:inline max-w-[110px] truncate">
               {currentUser.role === "SUPER_ADMIN" ? "Khalid Abdullah" : "Dashboard"}
             </span>
             <ChevronRight className="w-3 h-3 text-gray-500" />

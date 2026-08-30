@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 /* ============================================================
-   ARENEX DESIGN ENGINE: DUAL DARK & LIGHT PALETTES
+   ARENEX DUAL DESIGN ENGINE: LIGHT & DARK COLOR ARCHITECTURE
    ============================================================ */
 
 :root {
@@ -17,6 +17,18 @@
   --surface-elevated: 255 255 255;    /* #ffffff pure white */
   --surface-border: 226 232 240;      /* #e2e8f0 slate-200 border */
   --surface-border-light: 203 213 225;/* #cbd5e1 slate-300 border */
+
+  /* Inverted dynamic gray scale for light theme: darker values for high contrast */
+  --color-gray-50: 248 250 252;
+  --color-gray-100: 15 23 42;        /* #0f172a deep black-slate */
+  --color-gray-200: 30 41 59;        /* #1e293b dark slate */
+  --color-gray-300: 51 65 85;        /* #334155 charcoal slate */
+  --color-gray-400: 71 85 105;       /* #475569 readable slate */
+  --color-gray-500: 100 116 139;     /* #64748b mid slate */
+  --color-gray-600: 148 163 184;     /* #94a3b8 */
+  --color-gray-700: 203 213 225;     /* #cbd5e1 */
+  --color-gray-800: 226 232 240;     /* #e2e8f0 */
+  --color-gray-900: 241 245 249;     /* #f1f5f9 */
 }
 
 .dark {
@@ -30,6 +42,18 @@
   --surface-elevated: 24 32 50;       /* #182032 elevated modal/pill */
   --surface-border: 28 36 56;         /* #1c2438 tactical border */
   --surface-border-light: 40 52 80;   /* #283450 */
+
+  /* Standard light-gray values for dark esports theme */
+  --color-gray-50: 15 23 42;
+  --color-gray-100: 243 244 246;     /* #f3f4f6 off-white */
+  --color-gray-200: 229 231 235;     /* #e5e7eb bright gray */
+  --color-gray-300: 209 213 219;     /* #d1d5db light gray */
+  --color-gray-400: 156 163 175;     /* #9ca3af mid gray */
+  --color-gray-500: 107 114 128;     /* #6b7280 */
+  --color-gray-600: 75 85 99;        /* #4b5563 */
+  --color-gray-700: 55 65 81;        /* #374151 */
+  --color-gray-800: 31 41 55;        /* #1f2937 */
+  --color-gray-900: 17 24 39;        /* #111827 */
 }
 
 body {
@@ -58,7 +82,7 @@ html:not(.dark) body {
 html:not(.dark) .bg-surface-100 {
   background-color: #ffffff !important;
   border-color: #e2e8f0 !important;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05) !important;
+  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.06), 0 2px 4px -2px rgba(0, 0, 0, 0.04) !important;
 }
 
 html:not(.dark) .bg-surface-200 {
@@ -73,8 +97,9 @@ html:not(.dark) .bg-surface-300 {
 
 html:not(.dark) .bg-surface-elevated {
   background-color: #ffffff !important;
-  border-color: #e2e8f0 !important;
-  box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.04) !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+  box-shadow: 0 2px 6px 0 rgba(0, 0, 0, 0.05) !important;
 }
 
 html:not(.dark) .border-surface-border {
@@ -85,7 +110,7 @@ html:not(.dark) .border-surface-borderLight {
   border-color: #cbd5e1 !important;
 }
 
-/* Structural Headings in Light Mode */
+/* Light Mode Structural Headings */
 html:not(.dark) h1:not([class*="bg-brand-crimson"] *):not([class*="bg-red-"] *),
 html:not(.dark) h2:not([class*="bg-brand-crimson"] *):not([class*="bg-red-"] *),
 html:not(.dark) h3:not([class*="bg-brand-crimson"] *):not([class*="bg-red-"] *),
@@ -100,29 +125,9 @@ html:not(.dark) .text-transparent {
   color: transparent !important;
 }
 
-/* High-Contrast Text Mapping in Light Mode */
-html:not(.dark) .text-white:not([class*="bg-brand-crimson"] *):not([class*="bg-red-"] *):not(button.bg-brand-crimson *):not(a.bg-brand-crimson *):not(.text-transparent) {
+/* Universal Text White Override in Light Mode */
+html:not(.dark) .text-white:not([class*="bg-brand-crimson"] *):not([class*="bg-red-"] *):not(button.bg-brand-crimson *):not(a.bg-brand-crimson *):not(.bg-brand-crimson):not(.text-transparent) {
   color: #0f172a !important;
-}
-
-html:not(.dark) .text-gray-100:not([class*="bg-brand-crimson"] *):not([class*="bg-red-"] *) {
-  color: #0f172a !important;
-}
-
-html:not(.dark) .text-gray-200:not([class*="bg-brand-crimson"] *):not([class*="bg-red-"] *):not(button.bg-brand-crimson *):not(a.bg-brand-crimson *) {
-  color: #1e293b !important;
-}
-
-html:not(.dark) .text-gray-300:not([class*="bg-brand-crimson"] *):not([class*="bg-red-"] *):not(button.bg-brand-crimson *):not(a.bg-brand-crimson *) {
-  color: #334155 !important;
-}
-
-html:not(.dark) .text-gray-400:not([class*="bg-brand-crimson"] *):not([class*="bg-red-"] *):not(button.bg-brand-crimson *):not(a.bg-brand-crimson *) {
-  color: #475569 !important;
-}
-
-html:not(.dark) .text-gray-500:not([class*="bg-brand-crimson"] *):not([class*="bg-red-"] *):not(button.bg-brand-crimson *):not(a.bg-brand-crimson *) {
-  color: #64748b !important;
 }
 
 /* Table Text in Light Mode */
@@ -136,6 +141,8 @@ html:not(.dark) thead th {
 }
 
 /* CRITICAL: Preserves Pure White Text on Crimson / Red Action Elements */
+html:not(.dark) .bg-brand-crimson,
+html:not(.dark) .bg-brand-crimson *,
 html:not(.dark) [class*="bg-brand-crimson"],
 html:not(.dark) [class*="bg-brand-crimson"] *,
 html:not(.dark) [class*="bg-red-600"],
@@ -149,7 +156,7 @@ html:not(.dark) .group:hover .group-hover\:bg-brand-crimson * {
   color: #ffffff !important;
 }
 
-/* Light mode form inputs & selects */
+/* Form Inputs in Light Mode */
 html:not(.dark) input,
 html:not(.dark) select,
 html:not(.dark) textarea {
@@ -160,20 +167,7 @@ html:not(.dark) textarea {
 
 html:not(.dark) input::placeholder,
 html:not(.dark) textarea::placeholder {
-  color: #94a3b8 !important;
-}
-
-/* Secondary Button Contrast in Light Mode */
-html:not(.dark) a.bg-surface-elevated,
-html:not(.dark) button.bg-surface-elevated {
-  color: #1e293b !important;
-  border-color: #cbd5e1 !important;
-}
-
-html:not(.dark) a.bg-surface-elevated:hover,
-html:not(.dark) button.bg-surface-elevated:hover {
-  background-color: #f1f5f9 !important;
-  color: #0f172a !important;
+  color: #64748b !important;
 }
 
 /* Table row hover in light mode */

@@ -48,38 +48,38 @@ export function TournamentCard({ tournament }: TournamentCardProps) {
       {/* Title & Mode */}
       <div className="mb-4">
         <Link href={`/tournaments/${tournament.slug || tournament.id}`}>
-          <h3 className="font-display text-lg font-bold text-white group-hover:text-brand-crimsonLight transition-colors line-clamp-1 tracking-wide">
+          <h3 className="font-display text-lg font-bold text-slate-900 dark:text-white group-hover:text-brand-crimson transition-colors line-clamp-1 tracking-wide">
             {tournament.title}
           </h3>
         </Link>
-        <p className="text-xs text-gray-400 mt-0.5 line-clamp-1">{tournament.mode}</p>
+        <p className="text-xs text-slate-600 dark:text-gray-400 mt-0.5 line-clamp-1 font-medium">{tournament.mode}</p>
       </div>
 
       {/* Metrics Row: Prize Pool & Entry Fee */}
       <div className="grid grid-cols-2 gap-3 py-3 px-3.5 mb-4 rounded-lg bg-surface-200/90 border border-surface-border/80">
         <div>
-          <span className="text-[10px] uppercase font-mono tracking-wider text-gray-400 block">
+          <span className="text-[10px] uppercase font-mono tracking-wider text-slate-600 dark:text-gray-400 font-semibold block">
             Guaranteed Pool
           </span>
           <div className="flex items-baseline gap-1 text-brand-gold font-display font-black text-xl">
             <Trophy className="w-4 h-4 text-brand-gold" />
             <span>{formatCurrency(totalPrizeCents, tournament.currency)}</span>
           </div>
-          <span className="text-[10px] text-gray-400 block font-mono">
+          <span className="text-[10px] text-slate-600 dark:text-gray-400 block font-mono">
             Podium: {formatCurrency(tournament.main_prize_pool_cents, tournament.currency)} + Fragger: {formatCurrency(tournament.performance_reward_pool_cents, tournament.currency)}
           </span>
         </div>
 
         <div className="border-l border-surface-border/80 pl-3">
-          <span className="text-[10px] uppercase font-mono tracking-wider text-gray-400 block">
+          <span className="text-[10px] uppercase font-mono tracking-wider text-slate-600 dark:text-gray-400 font-semibold block">
             Entry Ticket
           </span>
-          <div className="text-white font-display font-black text-xl">
+          <div className="text-slate-900 dark:text-white font-display font-black text-xl">
             {tournament.entry_fee_cents === 0
               ? "FREE"
               : formatCurrency(tournament.entry_fee_cents, tournament.currency)}
           </div>
-          <span className="text-[10px] text-gray-400 block font-mono">
+          <span className="text-[10px] text-slate-600 dark:text-gray-400 block font-mono">
             {tournament.currency} / {tournament.format === "SQUAD" ? "Squad" : "Player"}
           </span>
         </div>
@@ -115,7 +115,7 @@ export function TournamentCard({ tournament }: TournamentCardProps) {
               ? `/live`
               : `/tournaments/${tournament.slug || tournament.id}`
           }
-          className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg bg-surface-elevated hover:bg-brand-crimson hover:text-white text-gray-200 border border-surface-border hover:border-brand-crimson transition-all font-display uppercase tracking-wider group-hover:bg-brand-crimson group-hover:text-white"
+          className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg bg-surface-elevated hover:bg-brand-crimson hover:text-white text-slate-900 dark:text-gray-200 border border-surface-border hover:border-brand-crimson transition-all font-display uppercase tracking-wider group-hover:bg-brand-crimson group-hover:text-white shadow-sm"
         >
           <span>{isLive ? "Watch Arena" : isRegistrationOpen ? "Enter Arena" : "View Cup"}</span>
           <ArrowRight className="w-3.5 h-3.5" />
