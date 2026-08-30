@@ -110,24 +110,39 @@ html:not(.dark) .border-surface-borderLight {
   border-color: #cbd5e1 !important;
 }
 
-/* Light Mode Structural Headings */
-html:not(.dark) h1:not([class*="bg-brand-crimson"] *):not([class*="bg-red-"] *),
-html:not(.dark) h2:not([class*="bg-brand-crimson"] *):not([class*="bg-red-"] *),
-html:not(.dark) h3:not([class*="bg-brand-crimson"] *):not([class*="bg-red-"] *),
-html:not(.dark) h4:not([class*="bg-brand-crimson"] *):not([class*="bg-red-"] *),
-html:not(.dark) h5:not([class*="bg-brand-crimson"] *):not([class*="bg-red-"] *),
-html:not(.dark) h6:not([class*="bg-brand-crimson"] *):not([class*="bg-red-"] *) {
+/* Light Mode Structural Headings & Typography */
+html:not(.dark) h1,
+html:not(.dark) h2,
+html:not(.dark) h3,
+html:not(.dark) h4,
+html:not(.dark) h5,
+html:not(.dark) h6 {
+  color: #0f172a;
+}
+
+/* Universal Text Overrides in Light Mode */
+html:not(.dark) .text-white {
   color: #0f172a !important;
 }
 
-/* Preserve Transparent Gradient Text */
-html:not(.dark) .text-transparent {
-  color: transparent !important;
+html:not(.dark) .text-gray-100 {
+  color: #0f172a !important;
 }
 
-/* Universal Text White Override in Light Mode */
-html:not(.dark) .text-white:not([class*="bg-brand-crimson"] *):not([class*="bg-red-"] *):not(button.bg-brand-crimson *):not(a.bg-brand-crimson *):not(.bg-brand-crimson):not(.text-transparent) {
-  color: #0f172a !important;
+html:not(.dark) .text-gray-200 {
+  color: #1e293b !important;
+}
+
+html:not(.dark) .text-gray-300 {
+  color: #334155 !important;
+}
+
+html:not(.dark) .text-gray-400 {
+  color: #475569 !important;
+}
+
+html:not(.dark) .text-gray-500 {
+  color: #64748b !important;
 }
 
 /* Table Text in Light Mode */
@@ -140,9 +155,16 @@ html:not(.dark) thead th {
   color: #475569 !important;
 }
 
+/* Preserve Transparent Gradient Text */
+html:not(.dark) .text-transparent {
+  color: transparent !important;
+}
+
 /* CRITICAL: Preserves Pure White Text on Crimson / Red Action Elements */
 html:not(.dark) .bg-brand-crimson,
 html:not(.dark) .bg-brand-crimson *,
+html:not(.dark) .bg-brand-crimsonDark,
+html:not(.dark) .bg-brand-crimsonDark *,
 html:not(.dark) [class*="bg-brand-crimson"],
 html:not(.dark) [class*="bg-brand-crimson"] *,
 html:not(.dark) [class*="bg-red-600"],
