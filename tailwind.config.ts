@@ -10,16 +10,16 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "#07090E",
+        background: "rgb(var(--background) / <alpha-value>)",
         surface: {
-          50: "#1A2234",
-          100: "#121724",
-          200: "#0D111A",
-          300: "#080B12",
-          DEFAULT: "#0D111A",
-          elevated: "#182032",
-          border: "#1C2438",
-          borderLight: "#283450",
+          50: "rgb(var(--surface-50) / <alpha-value>)",
+          100: "rgb(var(--surface-100) / <alpha-value>)",
+          200: "rgb(var(--surface-200) / <alpha-value>)",
+          300: "rgb(var(--surface-300) / <alpha-value>)",
+          DEFAULT: "rgb(var(--surface-200) / <alpha-value>)",
+          elevated: "rgb(var(--surface-elevated) / <alpha-value>)",
+          border: "rgb(var(--surface-border) / <alpha-value>)",
+          borderLight: "rgb(var(--surface-border-light) / <alpha-value>)",
         },
         brand: {
           crimson: "#FF1E44",
@@ -58,21 +58,17 @@ const config: Config = {
       },
       animation: {
         "pulse-subtle": "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
-        "live-glow": "liveGlow 2s ease-in-out infinite alternate",
-        "glow-crimson": "glowCrimson 2s ease-in-out infinite alternate",
+        "glow-crimson": "glowCrimson 2.5s ease-in-out infinite alternate",
       },
       keyframes: {
-        liveGlow: {
-          "0%": { boxShadow: "0 0 4px rgba(255, 30, 68, 0.4)" },
-          "100%": { boxShadow: "0 0 16px rgba(255, 30, 68, 0.85)" },
-        },
         glowCrimson: {
-          "0%": { boxShadow: "0 0 4px rgba(255, 30, 68, 0.3)" },
-          "100%": { boxShadow: "0 0 14px rgba(255, 30, 68, 0.75)" },
+          "0%": { boxShadow: "0 0 15px rgba(255, 30, 68, 0.25)" },
+          "100%": { boxShadow: "0 0 35px rgba(255, 30, 68, 0.55)" },
         },
       },
     },
   },
   plugins: [],
 };
+
 export default config;

@@ -13,6 +13,8 @@ import {
   History,
   ArrowRight,
   TrendingUp,
+  Edit3,
+  UploadCloud,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -61,8 +63,8 @@ export default function AdminDashboardPage() {
               href={`/admin/referee/match-night-battle-round-1`}
               className="px-4 py-2 rounded-lg bg-brand-crimson hover:bg-brand-crimsonDark text-white font-semibold text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-lg shadow-brand-crimson/25 transition-all font-display"
             >
-              <Radio className="w-3.5 h-3.5 animate-pulse" />
-              Open Live Referee Desk
+              <Edit3 className="w-3.5 h-3.5" />
+              Input & Upload Player Stats
             </Link>
           )}
           <Link
@@ -73,6 +75,29 @@ export default function AdminDashboardPage() {
             Verify Payments ({pendingPayments.length})
           </Link>
         </div>
+      </div>
+
+      {/* Primary Action Banner: Live Website Player Stats Upload Desk */}
+      <div className="p-6 rounded-2xl bg-brand-crimson/10 border border-brand-crimson/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-brand-crimson animate-ping" />
+            <h2 className="font-display text-lg font-bold text-white uppercase tracking-wider">
+              Live Tournament Stats Upload Desk
+            </h2>
+          </div>
+          <p className="text-xs text-gray-300 font-sans">
+            Directly input player kills, placement ranks, and survival status, and publish to the live website with one click.
+          </p>
+        </div>
+        <Link
+          href="/admin/referee/match-night-battle-round-1"
+          className="px-5 py-2.5 rounded-xl bg-brand-crimson hover:bg-brand-crimsonDark text-white font-display font-bold text-xs uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-brand-crimson/25 transition-all shrink-0"
+        >
+          <UploadCloud className="w-4 h-4" />
+          <span>Input & Publish Stats</span>
+          <ArrowRight className="w-4 h-4" />
+        </Link>
       </div>
 
       {/* KPI Metric Cards */}

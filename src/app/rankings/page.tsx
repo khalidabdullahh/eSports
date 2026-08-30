@@ -34,7 +34,7 @@ export default function RankingsPage() {
         </div>
 
         <div className="flex items-center gap-2 text-xs font-mono">
-          <button className="px-3 py-1.5 rounded-lg bg-cyan-500 text-black font-bold uppercase">
+          <button className="px-3 py-1.5 rounded-lg bg-brand-crimson text-white font-bold uppercase">
             Global Season
           </button>
           <button className="px-3 py-1.5 rounded-lg bg-surface-elevated text-gray-300 hover:text-white border border-surface-border uppercase">

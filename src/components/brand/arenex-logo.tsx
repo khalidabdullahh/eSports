@@ -107,10 +107,10 @@ export function ArenexLogo({
 
   const Wordmark = (
     <div className="flex flex-col leading-none select-none">
-      <div className="flex items-center tracking-wider font-display font-extrabold text-white">
+      <div className="flex items-center tracking-wider font-display font-extrabold text-slate-900 dark:text-white">
         <span className={cn(currentSize.text, "tracking-[0.14em] uppercase")}>
           ARE
-          <span className={isMonochrome ? "text-white" : "text-brand-crimson"}>NEX</span>
+          <span className={isMonochrome ? "text-slate-900 dark:text-white" : "text-brand-crimson"}>NEX</span>
         </span>
       </div>
       {(showTagline || variant === "stacked") && (

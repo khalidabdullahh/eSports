@@ -61,7 +61,7 @@ export default function TeamsPage() {
           </p>
         </div>
 
-        <button className="px-4 py-2 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-black font-semibold text-xs uppercase tracking-wider flex items-center gap-1.5 transition-all">
+        <button className="px-4 py-2 rounded-lg bg-brand-crimson hover:bg-brand-crimsonDark text-white font-semibold text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-md shadow-brand-crimson/25 transition-all font-display">
           <Plus className="w-3.5 h-3.5" />
           Create Team Roster
         </button>
@@ -69,7 +69,7 @@ export default function TeamsPage() {
 
       {/* Roster Locking Rule Alert */}
       <div className="p-4 rounded-xl bg-surface-100 border border-surface-border flex items-start gap-3 text-xs text-gray-300">
-        <Shield className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
+        <Shield className="w-4 h-4 text-brand-crimson shrink-0 mt-0.5" />
         <div>
           <span className="font-bold text-white uppercase font-mono tracking-wider">
             Roster Snapshot Protocol:

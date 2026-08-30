@@ -42,13 +42,6 @@ export default function HomePage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
             {/* Left: Brand Hero */}
             <div className="lg:col-span-7 space-y-6">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-surface-elevated/90 border border-surface-border text-xs font-mono text-brand-crimsonLight">
-                <Flame className="w-3.5 h-3.5 text-brand-crimson animate-pulse" />
-                <span className="font-semibold tracking-wider font-display uppercase">Season 4 Competitive Circuit</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-brand-crimson"></span>
-                <span className="text-gray-300">Free Fire Battle Royale</span>
-              </div>
-
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
                   <ArenexLogo variant="symbol" size="lg" />

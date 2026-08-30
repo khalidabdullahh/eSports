@@ -45,7 +45,7 @@ class EsportsDataStore {
   private payouts: Payout[] = [];
   private roomCredentials: Map<string, RoomCredential> = new Map();
   private notifications: AppNotification[] = [];
-  private currentUserId: string = "user-admin-1"; // Default active user for demo/testing
+  private currentUserId: string = "user-player-1"; // Default active visitor/player mode
 
   constructor() {
     this.seed();
