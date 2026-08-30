@@ -5,19 +5,31 @@ import { dataStore } from "@/lib/store";
 import { createClient } from "@/lib/supabase/server";
 import { PaymentMethod, MatchParticipant } from "@/types";
 
+const isProduction = process.env.NODE_ENV === "production";
+const isSupabaseConfigured = Boolean(
+  process.env.NEXT_PUBLIC_SUPABASE_URL &&
+  !process.env.NEXT_PUBLIC_SUPABASE_URL.includes("demo")
+);
+
 /**
- * Switch active user session (development / demo helper)
+ * Switch active user session (development / demo helper strictly disabled in production)
  */
 export async function switchActiveUserAction(userId: string) {
+  if (isProduction) {
+    return { success: false, error: "Action disabled in production" };
+  }
   dataStore.setCurrentUserId(userId);
   revalidatePath("/");
   return { success: true, user: dataStore.getCurrentUser() };
 }
 
 /**
- * Switch user role (admin desk unlocking)
+ * Switch user role (development / demo helper strictly disabled in production)
  */
 export async function switchUserRoleAction(userId: string) {
+  if (isProduction) {
+    return { success: false, error: "Action disabled in production" };
+  }
   dataStore.setCurrentUserId(userId);
   revalidatePath("/");
   revalidatePath("/admin");
@@ -26,7 +38,8 @@ export async function switchUserRoleAction(userId: string) {
 }
 
 /**
- * Registers a player for a tournament slot with server-side validation
+ * Registers a player for a tournament slot with server-side validation.
+ * Uses PostgreSQL stored procedure register_tournament_slot with pessimistic locking.
  */
 export async function registerPlayerAction(tournamentId: string, userId?: string) {
   try {
@@ -35,34 +48,48 @@ export async function registerPlayerAction(tournamentId: string, userId?: string
       data: { user: authUser },
     } = await supabase.auth.getUser();
 
-    const activeUserId = authUser?.id || userId || dataStore.getCurrentUserId();
+    const activeUserId = authUser?.id || userId;
 
-    // 1. Attempt Supabase PostgreSQL registration procedure if connected
-    if (authUser && process.env.NEXT_PUBLIC_SUPABASE_URL && !process.env.NEXT_PUBLIC_SUPABASE_URL.includes("demo")) {
+    if (!activeUserId) {
+      return { success: false, error: "Authentication required to register for a tournament." };
+    }
+
+    // 1. Authoritative production path
+    if (authUser && isSupabaseConfigured) {
       const { data, error } = await supabase.rpc("register_tournament_slot", {
         p_tournament_id: tournamentId,
         p_user_id: activeUserId,
       });
 
-      if (!error && data && data.length > 0) {
-        revalidatePath(`/tournaments/${tournamentId}`);
-        revalidatePath("/dashboard");
-        return {
-          success: true,
-          registration: {
-            id: data[0].registration_id,
-            slot_number: data[0].slot_number,
-            status: data[0].status,
-          },
-        };
+      if (error) {
+        return { success: false, error: error.message };
       }
+
+      if (!data || data.length === 0) {
+        return { success: false, error: "Failed to reserve slot in tournament." };
+      }
+
+      revalidatePath(`/tournaments/${tournamentId}`);
+      revalidatePath("/dashboard");
+      return {
+        success: true,
+        registration: {
+          id: data[0].registration_id,
+          slot_number: data[0].slot_number,
+          status: data[0].status,
+        },
+      };
     }
 
-    // 2. Fallback to server-authoritative data store
-    const registration = dataStore.registerPlayer(tournamentId, activeUserId);
-    revalidatePath(`/tournaments/${tournamentId}`);
-    revalidatePath("/dashboard");
-    return { success: true, registration };
+    // 2. Local prototype fallback (ONLY when unconfigured in development)
+    if (!isProduction && !isSupabaseConfigured) {
+      const registration = dataStore.registerPlayer(tournamentId, activeUserId);
+      revalidatePath(`/tournaments/${tournamentId}`);
+      revalidatePath("/dashboard");
+      return { success: true, registration };
+    }
+
+    return { success: false, error: "Database configuration error. Please contact tournament support." };
   } catch (err: unknown) {
     return { success: false, error: (err as Error).message || "Failed to register for tournament." };
   }
@@ -87,20 +114,27 @@ export async function submitPaymentAction(
 
     const userId = authUser?.id || dataStore.getCurrentUserId();
 
-    // Authoritative fee lookup: Never trust client-submitted amount
-    const tournament = dataStore.getTournament(tournamentId);
-    const authoritativeAmountCents = tournament?.entry_fee_cents ?? 5000;
+    // 1. Authoritative production path
+    if (authUser && isSupabaseConfigured) {
+      // Authoritatively fetch entry fee and currency from database
+      const { data: tourRow, error: tourError } = await supabase
+        .from("tournaments")
+        .select("entry_fee_cents, currency")
+        .eq("id", tournamentId)
+        .single();
 
-    // 1. Attempt Supabase payment insertion
-    if (authUser && process.env.NEXT_PUBLIC_SUPABASE_URL && !process.env.NEXT_PUBLIC_SUPABASE_URL.includes("demo")) {
+      if (tourError || !tourRow) {
+        return { success: false, error: "Tournament record not found." };
+      }
+
       const { data: paymentRow, error: paymentError } = await supabase
         .from("payments")
         .insert({
           tournament_id: tournamentId,
           registration_id: registrationId,
           user_id: userId,
-          amount_cents: authoritativeAmountCents,
-          currency: tournament?.currency || "BDT",
+          amount_cents: tourRow.entry_fee_cents,
+          currency: tourRow.currency,
           payment_method: paymentMethod,
           transaction_id: transactionId.trim().toUpperCase(),
           sender_phone: senderPhone?.trim() || null,
@@ -109,29 +143,41 @@ export async function submitPaymentAction(
         .select()
         .single();
 
-      if (!paymentError && paymentRow) {
-        revalidatePath(`/tournaments/${tournamentId}`);
-        revalidatePath("/dashboard");
-        revalidatePath("/admin/finance/payments");
-        return { success: true, payment: paymentRow };
+      if (paymentError) {
+        if (paymentError.code === "23505") {
+          return { success: false, error: "This transaction ID has already been submitted." };
+        }
+        return { success: false, error: paymentError.message };
       }
+
+      revalidatePath(`/tournaments/${tournamentId}`);
+      revalidatePath("/dashboard");
+      revalidatePath("/admin/finance/payments");
+      return { success: true, payment: paymentRow };
     }
 
-    // 2. Fallback to server-authoritative data store
-    const payment = dataStore.submitPayment(
-      tournamentId,
-      registrationId,
-      userId,
-      authoritativeAmountCents,
-      paymentMethod,
-      transactionId.trim().toUpperCase(),
-      senderPhone
-    );
+    // 2. Local prototype fallback (ONLY when unconfigured in development)
+    if (!isProduction && !isSupabaseConfigured) {
+      const tournament = dataStore.getTournament(tournamentId);
+      const authoritativeAmountCents = tournament?.entry_fee_cents ?? 5000;
 
-    revalidatePath(`/tournaments/${tournamentId}`);
-    revalidatePath("/dashboard");
-    revalidatePath("/admin/finance/payments");
-    return { success: true, payment };
+      const payment = dataStore.submitPayment(
+        tournamentId,
+        registrationId,
+        userId,
+        authoritativeAmountCents,
+        paymentMethod,
+        transactionId.trim().toUpperCase(),
+        senderPhone
+      );
+
+      revalidatePath(`/tournaments/${tournamentId}`);
+      revalidatePath("/dashboard");
+      revalidatePath("/admin/finance/payments");
+      return { success: true, payment };
+    }
+
+    return { success: false, error: "Database configuration error. Please contact tournament support." };
   } catch (err: unknown) {
     return { success: false, error: (err as Error).message || "Failed to submit entry payment." };
   }
@@ -147,33 +193,40 @@ export async function verifyPaymentAction(paymentId: string) {
       data: { user: authUser },
     } = await supabase.auth.getUser();
 
-    const adminId = authUser?.id || dataStore.getCurrentUserId();
+    // 1. Authoritative production path
+    if (authUser && isSupabaseConfigured) {
+      // Check admin authorization from database
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", authUser.id)
+        .single();
 
-    // Authorize admin caller
-    const currentUser = dataStore.getCurrentUser();
-    const isStaff =
-      currentUser.role === "SUPER_ADMIN" ||
-      currentUser.role === "OWNER" ||
-      currentUser.role === "FINANCE_ADMIN";
+      const isStaff =
+        profile?.role === "SUPER_ADMIN" ||
+        profile?.role === "OWNER" ||
+        profile?.role === "FINANCE_ADMIN";
 
-    if (!isStaff && !authUser) {
-      return { success: false, error: "Unauthorized: Only finance administrators can verify payments." };
-    }
+      if (!isStaff) {
+        return { success: false, error: "Unauthorized: Finance administrator privileges required." };
+      }
 
-    // 1. Supabase database update
-    if (authUser && process.env.NEXT_PUBLIC_SUPABASE_URL && !process.env.NEXT_PUBLIC_SUPABASE_URL.includes("demo")) {
       const { data: paymentRow, error } = await supabase
         .from("payments")
         .update({
           status: "VERIFIED",
-          verified_by: adminId,
+          verified_by: authUser.id,
           verified_at: new Date().toISOString(),
         })
         .eq("id", paymentId)
         .select()
         .single();
 
-      if (!error && paymentRow) {
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      if (paymentRow) {
         // Update registration status
         await supabase
           .from("tournament_registrations")
@@ -190,7 +243,16 @@ export async function verifyPaymentAction(paymentId: string) {
           currency: paymentRow.currency,
           account_reference: paymentRow.transaction_id,
           description: `Verified entry ticket from player via ${paymentRow.payment_method}`,
-          recorded_by: adminId,
+          recorded_by: authUser.id,
+        });
+
+        // Dispatch in-app notification to player
+        await supabase.from("notifications").insert({
+          user_id: paymentRow.user_id,
+          title: "Payment Verified — Slot Confirmed",
+          message: `Your payment (TrxID: ${paymentRow.transaction_id}) has been verified. Your tournament slot is confirmed!`,
+          type: "PAYMENT",
+          link_url: `/tournaments/${paymentRow.tournament_id}`,
         });
 
         revalidatePath("/admin/finance/payments");
@@ -200,12 +262,18 @@ export async function verifyPaymentAction(paymentId: string) {
       }
     }
 
-    // 2. Fallback to data store
-    const payment = dataStore.verifyPayment(paymentId, adminId);
-    revalidatePath("/admin/finance/payments");
-    revalidatePath("/admin/finance/ledger");
-    revalidatePath("/dashboard");
-    return { success: true, payment };
+    // 2. Local prototype fallback (ONLY when unconfigured in development)
+    if (!isProduction && !isSupabaseConfigured) {
+      const currentUser = dataStore.getCurrentUser();
+      const adminId = currentUser.id;
+      const payment = dataStore.verifyPayment(paymentId, adminId);
+      revalidatePath("/admin/finance/payments");
+      revalidatePath("/admin/finance/ledger");
+      revalidatePath("/dashboard");
+      return { success: true, payment };
+    }
+
+    return { success: false, error: "Database configuration error. Please contact tournament support." };
   } catch (err: unknown) {
     return { success: false, error: (err as Error).message || "Failed to verify payment." };
   }
@@ -221,12 +289,69 @@ export async function rejectPaymentAction(paymentId: string, reason: string) {
       data: { user: authUser },
     } = await supabase.auth.getUser();
 
-    const adminId = authUser?.id || dataStore.getCurrentUserId();
+    // 1. Authoritative production path
+    if (authUser && isSupabaseConfigured) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", authUser.id)
+        .single();
 
-    const payment = dataStore.rejectPayment(paymentId, adminId, reason);
-    revalidatePath("/admin/finance/payments");
-    revalidatePath("/dashboard");
-    return { success: true, payment };
+      const isStaff =
+        profile?.role === "SUPER_ADMIN" ||
+        profile?.role === "OWNER" ||
+        profile?.role === "FINANCE_ADMIN";
+
+      if (!isStaff) {
+        return { success: false, error: "Unauthorized: Finance administrator privileges required." };
+      }
+
+      const { data: paymentRow, error } = await supabase
+        .from("payments")
+        .update({
+          status: "REJECTED",
+          verified_by: authUser.id,
+          rejection_reason: reason.trim(),
+          verified_at: new Date().toISOString(),
+        })
+        .eq("id", paymentId)
+        .select()
+        .single();
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      if (paymentRow) {
+        await supabase
+          .from("tournament_registrations")
+          .update({ status: "CANCELLED" })
+          .eq("id", paymentRow.registration_id);
+
+        await supabase.from("notifications").insert({
+          user_id: paymentRow.user_id,
+          title: "Payment Submission Rejected",
+          message: `Your payment was rejected: ${reason.trim()}. Please verify your transaction ID or submit a dispute.`,
+          type: "PAYMENT",
+          link_url: `/tournaments/${paymentRow.tournament_id}/register`,
+        });
+
+        revalidatePath("/admin/finance/payments");
+        revalidatePath("/dashboard");
+        return { success: true, payment: paymentRow };
+      }
+    }
+
+    // 2. Local prototype fallback (ONLY when unconfigured in development)
+    if (!isProduction && !isSupabaseConfigured) {
+      const currentUser = dataStore.getCurrentUser();
+      const payment = dataStore.rejectPayment(paymentId, currentUser.id, reason);
+      revalidatePath("/admin/finance/payments");
+      revalidatePath("/dashboard");
+      return { success: true, payment };
+    }
+
+    return { success: false, error: "Database configuration error." };
   } catch (err: unknown) {
     return { success: false, error: (err as Error).message || "Failed to reject payment." };
   }
@@ -237,10 +362,41 @@ export async function rejectPaymentAction(paymentId: string, reason: string) {
  */
 export async function checkInPlayerAction(registrationId: string) {
   try {
-    const reg = dataStore.checkInPlayer(registrationId);
-    revalidatePath("/dashboard");
-    revalidatePath(`/tournaments/${reg.tournament_id}/room`);
-    return { success: true, registration: reg };
+    const supabase = await createClient();
+    const {
+      data: { user: authUser },
+    } = await supabase.auth.getUser();
+
+    if (authUser && isSupabaseConfigured) {
+      const { data: regRow, error } = await supabase
+        .from("tournament_registrations")
+        .update({
+          status: "CHECKED_IN",
+          checked_in_at: new Date().toISOString(),
+        })
+        .eq("id", registrationId)
+        .eq("user_id", authUser.id)
+        .eq("status", "APPROVED")
+        .select()
+        .single();
+
+      if (error || !regRow) {
+        return { success: false, error: "Unable to check in. Please ensure your payment has been approved." };
+      }
+
+      revalidatePath("/dashboard");
+      revalidatePath(`/tournaments/${regRow.tournament_id}/room`);
+      return { success: true, registration: regRow };
+    }
+
+    if (!isProduction && !isSupabaseConfigured) {
+      const reg = dataStore.checkInPlayer(registrationId);
+      revalidatePath("/dashboard");
+      revalidatePath(`/tournaments/${reg.tournament_id}/room`);
+      return { success: true, registration: reg };
+    }
+
+    return { success: false, error: "Database configuration error." };
   } catch (err: unknown) {
     return { success: false, error: (err as Error).message || "Failed to check in." };
   }
@@ -256,16 +412,46 @@ export async function getRoomCredentialAction(tournamentId: string) {
       data: { user: authUser },
     } = await supabase.auth.getUser();
 
-    const userId = authUser?.id || dataStore.getCurrentUserId();
-    const cred = dataStore.getRoomCredential(tournamentId, userId);
-    return { success: true, credential: cred };
+    if (authUser && isSupabaseConfigured) {
+      const { data: credRow, error } = await supabase
+        .from("room_credentials")
+        .select("room_name, room_password, release_at")
+        .eq("tournament_id", tournamentId)
+        .single();
+
+      if (error || !credRow) {
+        return {
+          success: false,
+          error: "Room credentials are not yet released or you are not an eligible checked-in participant.",
+        };
+      }
+
+      return {
+        success: true,
+        credential: {
+          id: `cred-${tournamentId}`,
+          tournament_id: tournamentId,
+          room_id: credRow.room_name,
+          room_password: credRow.room_password,
+          release_at: credRow.release_at,
+        },
+      };
+    }
+
+    if (!isProduction && !isSupabaseConfigured) {
+      const userId = dataStore.getCurrentUserId();
+      const cred = dataStore.getRoomCredential(tournamentId, userId);
+      return { success: true, credential: cred };
+    }
+
+    return { success: false, error: "Room credentials inaccessible." };
   } catch (err: unknown) {
     return { success: false, error: (err as Error).message || "Failed to retrieve room credentials." };
   }
 }
 
 /**
- * Referee action: Records a live telemetry event (frag, elimination, etc.)
+ * Referee action: Records a live telemetry event
  */
 export async function recordMatchEventAction(
   matchId: string,
@@ -397,18 +583,46 @@ export async function submitDisputeAction(
       data: { user: authUser },
     } = await supabase.auth.getUser();
 
-    const reporterId = authUser?.id || dataStore.getCurrentUserId();
-    const dispute = dataStore.submitDispute(
-      tournamentId,
-      matchId,
-      reporterId,
-      reason,
-      description,
-      evidenceUrl
-    );
-    revalidatePath("/admin/disputes");
-    revalidatePath("/dashboard");
-    return { success: true, dispute };
+    if (authUser && isSupabaseConfigured) {
+      const { data: disputeRow, error } = await supabase
+        .from("disputes")
+        .insert({
+          tournament_id: tournamentId,
+          match_id: matchId.includes("match-") ? null : matchId,
+          user_id: authUser.id,
+          category: reason,
+          description: description.trim(),
+          evidence_urls: evidenceUrl ? [evidenceUrl.trim()] : [],
+          status: "OPEN",
+        })
+        .select()
+        .single();
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      revalidatePath("/admin/disputes");
+      revalidatePath("/dashboard");
+      return { success: true, dispute: disputeRow };
+    }
+
+    if (!isProduction && !isSupabaseConfigured) {
+      const reporterId = dataStore.getCurrentUserId();
+      const dispute = dataStore.submitDispute(
+        tournamentId,
+        matchId,
+        reporterId,
+        reason,
+        description,
+        evidenceUrl
+      );
+      revalidatePath("/admin/disputes");
+      revalidatePath("/dashboard");
+      return { success: true, dispute };
+    }
+
+    return { success: false, error: "Database configuration error." };
   } catch (err: unknown) {
     return { success: false, error: (err as Error).message || "Failed to submit dispute." };
   }

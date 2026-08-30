@@ -17,17 +17,10 @@ import {
   UploadCloud,
 } from "lucide-react";
 
-import { AdminAuthWall } from "@/components/admin-auth-wall";
-
 export const dynamic = "force-dynamic";
 
 export default function AdminDashboardPage() {
   const currentUser = dataStore.getCurrentUser();
-  const isStaff = currentUser && currentUser.role === "SUPER_ADMIN";
-
-  if (!isStaff) {
-    return <AdminAuthWall />;
-  }
   const tournaments = dataStore.getTournaments();
   const liveTournament = tournaments.find((t) => t.status === "LIVE");
   const registrations = dataStore.getRegistrations();

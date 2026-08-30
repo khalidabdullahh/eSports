@@ -53,6 +53,7 @@ export async function updateSession(request: NextRequest) {
 
   // Protect designated private routes
   const isProtectedRoute =
+    pathname.startsWith("/admin") ||
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/onboarding") ||
     pathname.startsWith("/notifications");

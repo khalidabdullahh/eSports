@@ -36,7 +36,19 @@ export default async function PlayerDashboardPage() {
   let inGameName = currentUser.in_game_name;
   let freeFireUid = currentUser.free_fire_uid;
 
-  if (authUser) {
+  const isProduction = process.env.NODE_ENV === "production";
+  const isSupabaseConfigured = Boolean(
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    !process.env.NEXT_PUBLIC_SUPABASE_URL.includes("demo")
+  );
+
+  let myRegistrations: any[] = [];
+  let myPayments: any[] = [];
+  let myRewards: any[] = [];
+  let myPayouts: any[] = [];
+  let notifications: any[] = [];
+
+  if (authUser && isSupabaseConfigured) {
     const { data: profileRow } = await supabase
       .from("profiles")
       .select("*")
@@ -44,9 +56,9 @@ export default async function PlayerDashboardPage() {
       .single();
 
     if (profileRow) {
-      displayName = profileRow.display_name || displayName;
-      avatarUrl = profileRow.avatar_url || avatarUrl;
-      role = profileRow.role || role;
+      displayName = profileRow.display_name || authUser.email?.split("@")[0] || "Competitor";
+      avatarUrl = profileRow.avatar_url || "";
+      role = profileRow.role || "USER";
     }
 
     const { data: gameAccountRow } = await supabase
@@ -54,22 +66,55 @@ export default async function PlayerDashboardPage() {
       .select("*")
       .eq("user_id", authUser.id)
       .limit(1)
-      .single();
+      .maybeSingle();
 
     if (gameAccountRow) {
-      inGameName = gameAccountRow.in_game_name || inGameName;
-      freeFireUid = gameAccountRow.game_uid || freeFireUid;
+      inGameName = gameAccountRow.in_game_name || "";
+      freeFireUid = gameAccountRow.game_uid || "";
+    } else {
+      inGameName = "";
+      freeFireUid = "";
     }
+
+    const { data: dbRegs } = await supabase
+      .from("tournament_registrations")
+      .select("*, tournaments(title, scheduled_start_at, status)")
+      .eq("user_id", authUser.id);
+    if (dbRegs) myRegistrations = dbRegs;
+
+    const { data: dbPayments } = await supabase
+      .from("payments")
+      .select("*")
+      .eq("user_id", authUser.id);
+    if (dbPayments) myPayments = dbPayments;
+
+    const { data: dbRewards } = await supabase
+      .from("rewards")
+      .select("*")
+      .eq("recipient_user_id", authUser.id);
+    if (dbRewards) myRewards = dbRewards;
+
+    const { data: dbPayouts } = await supabase
+      .from("payouts")
+      .select("*")
+      .eq("user_id", authUser.id);
+    if (dbPayouts) myPayouts = dbPayouts;
+
+    const { data: dbNotifs } = await supabase
+      .from("notifications")
+      .select("*")
+      .eq("user_id", authUser.id);
+    if (dbNotifs) notifications = dbNotifs;
+  } else if (!isProduction) {
+    const registrations = dataStore.getRegistrations();
+    myRegistrations = registrations.filter((r) => r.user_id === currentUser.id);
+    myPayments = dataStore.getPayments().filter((p) => p.user_id === currentUser.id);
+    myRewards = dataStore.getRewards().filter((r) => r.recipient_user_id === currentUser.id);
+    myPayouts = dataStore.getPayouts().filter((p) => p.user_id === currentUser.id);
+    notifications = dataStore.getNotifications(currentUser.id);
   }
 
-  const registrations = dataStore.getRegistrations();
-  const myRegistrations = registrations.filter((r) => r.user_id === currentUser.id);
-  const myPayments = dataStore.getPayments().filter((p) => p.user_id === currentUser.id);
-  const myRewards = dataStore.getRewards().filter((r) => r.recipient_user_id === currentUser.id);
-  const myPayouts = dataStore.getPayouts().filter((p) => p.user_id === currentUser.id);
-  const notifications = dataStore.getNotifications(currentUser.id);
-
-  const totalEarningsCents = myRewards.reduce((acc, r) => acc + r.amount_cents, 0);
+  const totalEarningsCents = myRewards.reduce((acc: number, r: any) => acc + (r.amount_cents || 0), 0);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8">

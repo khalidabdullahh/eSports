@@ -55,7 +55,7 @@ export function AdminAccessButton({ currentRole }: AdminAccessButtonProps) {
   };
 
   const handleDirectAccess = () => {
-    if (isStaff) {
+    if (process.env.NODE_ENV === "production" || isStaff) {
       router.push("/admin");
     } else {
       setIsOpen(true);
