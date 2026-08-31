@@ -25,7 +25,7 @@ VALUES
   ('00000000-0000-0000-0000-000000000002', 'pubg-mobile', 'PUBG Mobile', 'Krafton', true),
   ('00000000-0000-0000-0000-000000000003', 'mlbb', 'Mobile Legends: Bang Bang', 'Moonton', true)
 ON CONFLICT (slug) DO UPDATE 
-SET is_active = true, updated_at = NOW();
+SET is_active = true;
 
 -- ------------------------------------------------------------
 -- 3. ENSURE RLS INSERT POLICIES EXIST ON PROFILES
@@ -195,59 +195,78 @@ BEGIN
 
   -- 3. Upsert Game Account
   IF p_game_uid IS NOT NULL AND TRIM(p_game_uid) <> '' AND p_in_game_name IS NOT NULL AND TRIM(p_in_game_name) <> '' THEN
-    INSERT INTO public.game_accounts (
-      user_id,
-      game_id,
-      game_uid,
-      in_game_name,
-      platform,
-      verification_status,
-      created_at,
-      updated_at
-    ) VALUES (
-      v_user_id,
-      v_game_id,
-      TRIM(p_game_uid),
-      TRIM(p_in_game_name),
-      COALESCE(NULLIF(TRIM(p_platform), ''), 'MOBILE'),
-      'UNVERIFIED',
-      NOW(),
-      NOW()
-    )
-    ON CONFLICT (user_id, game_id) DO UPDATE
-    SET
-      game_uid = EXCLUDED.game_uid,
-      in_game_name = EXCLUDED.in_game_name,
-      platform = EXCLUDED.platform,
-      updated_at = NOW()
-    RETURNING * INTO v_game_account;
+    SELECT * INTO v_game_account FROM public.game_accounts
+    WHERE user_id = v_user_id AND game_id = v_game_id
+    LIMIT 1;
+
+    IF v_game_account.id IS NULL THEN
+      INSERT INTO public.game_accounts (
+        user_id,
+        game_id,
+        game_uid,
+        in_game_name,
+        platform,
+        verification_status,
+        created_at,
+        updated_at
+      ) VALUES (
+        v_user_id,
+        v_game_id,
+        TRIM(p_game_uid),
+        TRIM(p_in_game_name),
+        COALESCE(NULLIF(TRIM(p_platform), ''), 'MOBILE'),
+        'UNVERIFIED',
+        NOW(),
+        NOW()
+      )
+      RETURNING * INTO v_game_account;
+    ELSE
+      UPDATE public.game_accounts
+      SET
+        game_uid = TRIM(p_game_uid),
+        in_game_name = TRIM(p_in_game_name),
+        platform = COALESCE(NULLIF(TRIM(p_platform), ''), 'MOBILE'),
+        updated_at = NOW()
+      WHERE id = v_game_account.id
+      RETURNING * INTO v_game_account;
+    END IF;
   END IF;
 
   -- 4. Upsert Payout Profile
   IF p_payout_number IS NOT NULL AND TRIM(p_payout_number) <> '' THEN
-    INSERT INTO public.payout_profiles (
-      user_id,
-      payout_method,
-      payout_number,
-      account_holder_name,
-      is_verified,
-      created_at,
-      updated_at
-    ) VALUES (
-      v_user_id,
-      p_payout_method,
-      TRIM(p_payout_number),
-      COALESCE(NULLIF(TRIM(p_account_holder_name), ''), TRIM(p_display_name)),
-      false,
-      NOW(),
-      NOW()
-    )
-    ON CONFLICT (user_id, payout_method) DO UPDATE
-    SET
-      payout_number = EXCLUDED.payout_number,
-      account_holder_name = EXCLUDED.account_holder_name,
-      updated_at = NOW()
-    RETURNING * INTO v_payout_profile;
+    -- Check if record exists for user and payout_method
+    SELECT * INTO v_payout_profile FROM public.payout_profiles 
+    WHERE user_id = v_user_id AND payout_method::TEXT = LOWER(TRIM(p_payout_method))
+    LIMIT 1;
+
+    IF v_payout_profile.id IS NULL THEN
+      INSERT INTO public.payout_profiles (
+        user_id,
+        payout_method,
+        payout_number,
+        account_holder_name,
+        is_verified,
+        created_at,
+        updated_at
+      ) VALUES (
+        v_user_id,
+        LOWER(TRIM(p_payout_method))::payout_method_type,
+        TRIM(p_payout_number),
+        COALESCE(NULLIF(TRIM(p_account_holder_name), ''), TRIM(p_display_name)),
+        false,
+        NOW(),
+        NOW()
+      )
+      RETURNING * INTO v_payout_profile;
+    ELSE
+      UPDATE public.payout_profiles
+      SET
+        payout_number = TRIM(p_payout_number),
+        account_holder_name = COALESCE(NULLIF(TRIM(p_account_holder_name), ''), TRIM(p_display_name)),
+        updated_at = NOW()
+      WHERE id = v_payout_profile.id
+      RETURNING * INTO v_payout_profile;
+    END IF;
   END IF;
 
   RETURN jsonb_build_object(
