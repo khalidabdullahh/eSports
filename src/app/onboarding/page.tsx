@@ -41,8 +41,70 @@ export default function OnboardingPage() {
   const [payoutMethod, setPayoutMethod] = useState<"bkash" | "nagad" | "rocket">("bkash");
   const [payoutNumber, setPayoutNumber] = useState("");
   const [accountHolderName, setAccountHolderName] = useState("");
+  const [isLoadingExisting, setIsLoadingExisting] = useState(true);
 
   const supabase = createClient();
+
+  // Load existing profile, game account and payout info if already configured
+  React.useEffect(() => {
+    async function loadExistingData() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          setIsLoadingExisting(false);
+          return;
+        }
+
+        // 1. Fetch Profile
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("display_name, phone_number, country, avatar_url")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        if (profile) {
+          if (profile.display_name) setDisplayName(profile.display_name);
+          if (profile.phone_number) setPhoneNumber(profile.phone_number);
+          if (profile.country) setCountry(profile.country);
+          if (profile.avatar_url) setAvatarUrl(profile.avatar_url);
+        } else if (user.user_metadata?.full_name || user.user_metadata?.name) {
+          setDisplayName(user.user_metadata.full_name || user.user_metadata.name);
+        }
+
+        // 2. Fetch Game Account
+        const { data: gameAccount } = await supabase
+          .from("game_accounts")
+          .select("game_uid, in_game_name, platform")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (gameAccount) {
+          if (gameAccount.game_uid) setGameUid(gameAccount.game_uid);
+          if (gameAccount.in_game_name) setInGameName(gameAccount.in_game_name);
+          if (gameAccount.platform) setPlatform(gameAccount.platform);
+        }
+
+        // 3. Fetch Payout Profile
+        const { data: payout } = await supabase
+          .from("payout_profiles")
+          .select("payout_method, payout_number, account_holder_name")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (payout) {
+          if (payout.payout_method) setPayoutMethod(payout.payout_method as any);
+          if (payout.payout_number) setPayoutNumber(payout.payout_number);
+          if (payout.account_holder_name) setAccountHolderName(payout.account_holder_name);
+        }
+      } catch (err) {
+        console.error("Notice: Could not prefill onboarding data:", err);
+      } finally {
+        setIsLoadingExisting(false);
+      }
+    }
+
+    loadExistingData();
+  }, []);
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

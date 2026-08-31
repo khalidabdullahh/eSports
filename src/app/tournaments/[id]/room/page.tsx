@@ -33,17 +33,69 @@ export default async function TournamentRoomPage({
     data: { user: authUser },
   } = await supabase.auth.getUser();
 
-  const currentUser = dataStore.getCurrentUser();
-  const activeUserId = authUser?.id || currentUser.id;
+  const isProduction = process.env.NODE_ENV === "production";
+  const isSupabaseConfigured = Boolean(
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    !process.env.NEXT_PUBLIC_SUPABASE_URL.includes("demo")
+  );
 
-  const registrations = dataStore.getRegistrations(tournament.id);
-  const userRegistration = registrations.find((r) => r.user_id === activeUserId);
+  let userRegistration: { id: string; status: string; slot_number: number } | null = null;
+  let isStaff = false;
+  let displayName = "Player";
+  let userRole = "USER";
 
-  const isStaff =
-    currentUser.role === "SUPER_ADMIN" ||
-    currentUser.role === "OWNER" ||
-    currentUser.role === "TOURNAMENT_ADMIN" ||
-    currentUser.role === "REFEREE";
+  if (authUser && isSupabaseConfigured) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("display_name, role")
+      .eq("id", authUser.id)
+      .maybeSingle();
+
+    if (profile) {
+      displayName = profile.display_name || authUser.email?.split("@")[0] || "Competitor";
+      userRole = profile.role || "USER";
+    }
+
+    if (
+      userRole === "SUPER_ADMIN" ||
+      userRole === "OWNER" ||
+      userRole === "TOURNAMENT_ADMIN" ||
+      userRole === "REFEREE"
+    ) {
+      isStaff = true;
+    }
+
+    const { data: dbReg } = await supabase
+      .from("tournament_registrations")
+      .select("id, status, slot_number")
+      .eq("tournament_id", tournament.id)
+      .eq("user_id", authUser.id)
+      .maybeSingle();
+
+    if (dbReg) {
+      userRegistration = dbReg;
+    }
+  } else if (!isProduction) {
+    const currentUser = dataStore.getCurrentUser();
+    const activeUserId = authUser?.id || currentUser.id;
+    displayName = currentUser.display_name;
+    userRole = currentUser.role;
+    isStaff =
+      currentUser.role === "SUPER_ADMIN" ||
+      currentUser.role === "OWNER" ||
+      currentUser.role === "TOURNAMENT_ADMIN" ||
+      currentUser.role === "REFEREE";
+
+    const registrations = dataStore.getRegistrations(tournament.id);
+    const mockReg = registrations.find((r) => r.user_id === activeUserId);
+    if (mockReg) {
+      userRegistration = {
+        id: mockReg.id,
+        status: mockReg.status,
+        slot_number: mockReg.slot_number,
+      };
+    }
+  }
 
   const isEligible = isStaff || (userRegistration && (userRegistration.status === "CHECKED_IN" || userRegistration.status === "APPROVED"));
   const isCheckedIn = userRegistration?.status === "CHECKED_IN";
@@ -86,7 +138,7 @@ export default async function TournamentRoomPage({
           <div>
             <span className="text-gray-400 block uppercase">Active Identity</span>
             <span className="font-bold text-white text-sm">
-              {currentUser.display_name} ({currentUser.role})
+              {displayName} ({userRole})
             </span>
           </div>
           <div>

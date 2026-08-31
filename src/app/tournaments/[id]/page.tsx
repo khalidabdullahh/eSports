@@ -38,11 +38,38 @@ export default async function TournamentDetailPage({
     data: { user: authUser },
   } = await supabase.auth.getUser();
 
-  const currentUser = dataStore.getCurrentUser();
-  const activeUserId = authUser?.id || currentUser.id;
+  const isProduction = process.env.NODE_ENV === "production";
+  const isSupabaseConfigured = Boolean(
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    !process.env.NEXT_PUBLIC_SUPABASE_URL.includes("demo")
+  );
 
-  const registrations = dataStore.getRegistrations(tournament.id);
-  const userRegistration = registrations.find((r) => r.user_id === activeUserId);
+  let userRegistration: { id: string; status: string; slot_number: number } | null = null;
+
+  if (authUser && isSupabaseConfigured) {
+    const { data: dbReg } = await supabase
+      .from("tournament_registrations")
+      .select("id, status, slot_number")
+      .eq("tournament_id", tournament.id)
+      .eq("user_id", authUser.id)
+      .maybeSingle();
+
+    if (dbReg) {
+      userRegistration = dbReg;
+    }
+  } else if (!isProduction) {
+    const currentUser = dataStore.getCurrentUser();
+    const activeUserId = authUser?.id || currentUser.id;
+    const registrations = dataStore.getRegistrations(tournament.id);
+    const mockReg = registrations.find((r) => r.user_id === activeUserId);
+    if (mockReg) {
+      userRegistration = {
+        id: mockReg.id,
+        status: mockReg.status,
+        slot_number: mockReg.slot_number,
+      };
+    }
+  }
 
   const totalPrizeCents =
     tournament.main_prize_pool_cents + tournament.performance_reward_pool_cents;

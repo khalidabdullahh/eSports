@@ -49,24 +49,33 @@ export default async function PlayerDashboardPage() {
   let notifications: any[] = [];
 
   if (authUser && isSupabaseConfigured) {
-    const { data: profileRow } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", authUser.id)
-      .single();
+    const [
+      { data: profileRow },
+      { data: gameAccountRow },
+      { data: dbRegs },
+      { data: dbPayments },
+      { data: dbRewards },
+      { data: dbPayouts },
+      { data: dbNotifs },
+    ] = await Promise.all([
+      supabase.from("profiles").select("*").eq("id", authUser.id).maybeSingle(),
+      supabase.from("game_accounts").select("*").eq("user_id", authUser.id).limit(1).maybeSingle(),
+      supabase
+        .from("tournament_registrations")
+        .select("*, tournaments(id, title, mode, scheduled_start_at, status, main_prize_pool_cents, currency)")
+        .eq("user_id", authUser.id)
+        .order("created_at", { ascending: false }),
+      supabase.from("payments").select("*").eq("user_id", authUser.id).order("created_at", { ascending: false }),
+      supabase.from("rewards").select("*").eq("recipient_user_id", authUser.id).order("created_at", { ascending: false }),
+      supabase.from("payouts").select("*").eq("user_id", authUser.id).order("created_at", { ascending: false }),
+      supabase.from("notifications").select("*").eq("user_id", authUser.id).order("created_at", { ascending: false }),
+    ]);
 
     if (profileRow) {
       displayName = profileRow.display_name || authUser.email?.split("@")[0] || "Competitor";
       avatarUrl = profileRow.avatar_url || "";
       role = profileRow.role || "USER";
     }
-
-    const { data: gameAccountRow } = await supabase
-      .from("game_accounts")
-      .select("*")
-      .eq("user_id", authUser.id)
-      .limit(1)
-      .maybeSingle();
 
     if (gameAccountRow) {
       inGameName = gameAccountRow.in_game_name || "";
@@ -76,34 +85,10 @@ export default async function PlayerDashboardPage() {
       freeFireUid = "";
     }
 
-    const { data: dbRegs } = await supabase
-      .from("tournament_registrations")
-      .select("*, tournaments(title, scheduled_start_at, status)")
-      .eq("user_id", authUser.id);
     if (dbRegs) myRegistrations = dbRegs;
-
-    const { data: dbPayments } = await supabase
-      .from("payments")
-      .select("*")
-      .eq("user_id", authUser.id);
     if (dbPayments) myPayments = dbPayments;
-
-    const { data: dbRewards } = await supabase
-      .from("rewards")
-      .select("*")
-      .eq("recipient_user_id", authUser.id);
     if (dbRewards) myRewards = dbRewards;
-
-    const { data: dbPayouts } = await supabase
-      .from("payouts")
-      .select("*")
-      .eq("user_id", authUser.id);
     if (dbPayouts) myPayouts = dbPayouts;
-
-    const { data: dbNotifs } = await supabase
-      .from("notifications")
-      .select("*")
-      .eq("user_id", authUser.id);
     if (dbNotifs) notifications = dbNotifs;
   } else if (!isProduction) {
     const registrations = dataStore.getRegistrations();
@@ -179,53 +164,64 @@ export default async function PlayerDashboardPage() {
       </div>
 
       {/* Lifecycle Stepper / Active Tournament Status */}
-      <div className="rounded-2xl bg-surface-100 border border-surface-border p-6 space-y-4 shadow-xl">
-        <div className="flex items-center justify-between pb-3 border-b border-surface-border">
-          <h2 className="font-display text-lg font-black text-slate-900 dark:text-white uppercase tracking-wider">
-            Active Tournament Lifecycle Progression
-          </h2>
-          <span className="text-xs font-mono text-brand-crimson font-bold">Night Battle — Solo Cup</span>
-        </div>
+      {myRegistrations.length > 0 && (() => {
+        const latestReg = myRegistrations[0];
+        const latestTour = latestReg.tournaments || (!latestReg.tournaments ? dataStore.getTournament(latestReg.tournament_id) : null);
+        const tourTitle = latestTour?.title || "Active Tournament";
+        const isPaid = latestReg.status === "APPROVED" || latestReg.status === "CHECKED_IN";
+        const isCheckedIn = latestReg.status === "CHECKED_IN";
+        const isLive = latestTour?.status === "LIVE";
 
-        {/* 6-Step Progression Bar */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 pt-2 text-center text-xs font-mono">
-          <div className="p-3 rounded-lg bg-surface-200 border border-emerald-500/30 text-brand-emerald space-y-1">
-            <span className="text-base block font-bold">✓</span>
-            <span className="font-bold block">1. Registration</span>
-            <span className="text-[10px] text-slate-500 dark:text-gray-400 block">Slot Confirmed</span>
-          </div>
+        return (
+          <div className="rounded-2xl bg-surface-100 border border-surface-border p-6 space-y-4 shadow-xl">
+            <div className="flex items-center justify-between pb-3 border-b border-surface-border">
+              <h2 className="font-display text-lg font-black text-slate-900 dark:text-white uppercase tracking-wider">
+                Active Tournament Lifecycle Progression
+              </h2>
+              <span className="text-xs font-mono text-brand-crimson font-bold">{tourTitle}</span>
+            </div>
 
-          <div className="p-3 rounded-lg bg-surface-200 border border-emerald-500/30 text-brand-emerald space-y-1">
-            <span className="text-base block font-bold">✓</span>
-            <span className="font-bold block">2. Payment</span>
-            <span className="text-[10px] text-slate-500 dark:text-gray-400 block">Verified (৳50)</span>
-          </div>
+            {/* 6-Step Dynamic Progression Bar */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 pt-2 text-center text-xs font-mono">
+              <div className="p-3 rounded-lg bg-surface-200 border border-emerald-500/30 text-brand-emerald space-y-1">
+                <span className="text-base block font-bold">✓</span>
+                <span className="font-bold block">1. Registration</span>
+                <span className="text-[10px] text-slate-500 dark:text-gray-400 block">Slot #{latestReg.slot_number || 1} Confirmed</span>
+              </div>
 
-          <div className="p-3 rounded-lg bg-surface-200 border border-emerald-500/30 text-brand-emerald space-y-1">
-            <span className="text-base block font-bold">✓</span>
-            <span className="font-bold block">3. Check-In</span>
-            <span className="text-[10px] text-slate-500 dark:text-gray-400 block">Checked In</span>
-          </div>
+              <div className={`p-3 rounded-lg bg-surface-200 border ${isPaid ? "border-emerald-500/30 text-brand-emerald" : "border-amber-500/30 text-amber-500"} space-y-1`}>
+                <span className="text-base block font-bold">{isPaid ? "✓" : "⏳"}</span>
+                <span className="font-bold block">2. Payment</span>
+                <span className="text-[10px] text-slate-500 dark:text-gray-400 block">{isPaid ? "Verified" : "Verification"}</span>
+              </div>
 
-          <div className="p-3 rounded-lg bg-surface-200 border border-brand-crimson/40 text-brand-crimson space-y-1">
-            <Unlock className="w-4 h-4 mx-auto text-brand-crimson" />
-            <span className="font-bold block">4. Room Key</span>
-            <span className="text-[10px] text-slate-500 dark:text-gray-400 block">Unlocked</span>
-          </div>
+              <div className={`p-3 rounded-lg bg-surface-200 border ${isCheckedIn ? "border-emerald-500/30 text-brand-emerald" : "border-surface-border text-slate-500 dark:text-gray-400"} space-y-1`}>
+                <span className="text-base block font-bold">{isCheckedIn ? "✓" : "3"}</span>
+                <span className="font-bold block">3. Check-In</span>
+                <span className="text-[10px] text-slate-500 dark:text-gray-400 block">{isCheckedIn ? "Checked In" : "Pending Room"}</span>
+              </div>
 
-          <div className="p-3 rounded-lg bg-surface-200 border border-surface-border text-slate-500 dark:text-gray-400 space-y-1">
-            <Radio className="w-4 h-4 mx-auto" />
-            <span className="font-bold block">5. Live Match</span>
-            <span className="text-[10px] block">Starts 10:00 PM</span>
-          </div>
+              <div className={`p-3 rounded-lg bg-surface-200 border ${isPaid ? "border-brand-crimson/40 text-brand-crimson" : "border-surface-border text-slate-500 dark:text-gray-400"} space-y-1`}>
+                <Unlock className={`w-4 h-4 mx-auto ${isPaid ? "text-brand-crimson" : "text-gray-400"}`} />
+                <span className="font-bold block">4. Room Key</span>
+                <span className="text-[10px] text-slate-500 dark:text-gray-400 block">{isPaid ? "Unlocked" : "Locked"}</span>
+              </div>
 
-          <div className="p-3 rounded-lg bg-surface-200 border border-surface-border text-slate-500 dark:text-gray-400 space-y-1">
-            <Trophy className="w-4 h-4 mx-auto" />
-            <span className="font-bold block">6. Payout</span>
-            <span className="text-[10px] block">৳1,500 Pool</span>
+              <div className={`p-3 rounded-lg bg-surface-200 border ${isLive ? "border-emerald-500/40 text-brand-emerald" : "border-surface-border text-slate-500 dark:text-gray-400"} space-y-1`}>
+                <Radio className="w-4 h-4 mx-auto" />
+                <span className="font-bold block">5. Live Match</span>
+                <span className="text-[10px] block">{isLive ? "Match Underway" : "Scheduled"}</span>
+              </div>
+
+              <div className="p-3 rounded-lg bg-surface-200 border border-surface-border text-slate-500 dark:text-gray-400 space-y-1">
+                <Trophy className="w-4 h-4 mx-auto" />
+                <span className="font-bold block">6. Payout</span>
+                <span className="text-[10px] block">Prize Pool</span>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+        );
+      })()}
 
       {/* Grid: My Registrations & Financial History */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -246,73 +242,105 @@ export default async function PlayerDashboardPage() {
             </div>
 
             <div className="space-y-3">
-              {myRegistrations.map((reg) => {
-                const tournament = dataStore.getTournament(reg.tournament_id);
-                if (!tournament) return null;
-                const isPaid = reg.status === "APPROVED" || reg.status === "CHECKED_IN";
-
-                return (
-                  <div
-                    key={reg.id}
-                    className="p-4 rounded-xl bg-surface-200 border border-surface-border space-y-3"
+              {myRegistrations.length === 0 ? (
+                <div className="p-8 text-center rounded-xl bg-surface-200 border border-surface-border space-y-3">
+                  <Trophy className="w-8 h-8 text-gray-500 mx-auto" />
+                  <p className="text-sm font-semibold text-slate-800 dark:text-gray-200">
+                    No tournament registrations yet
+                  </p>
+                  <p className="text-xs text-slate-500 dark:text-gray-400">
+                    Browse open tournaments and join your first competitive cup.
+                  </p>
+                  <Link
+                    href="/tournaments"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-crimson hover:bg-brand-crimsonDark text-white text-xs font-display font-bold uppercase tracking-wider transition-all shadow-md shadow-brand-crimson/20"
                   >
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="px-2 py-0.5 rounded bg-brand-crimson/10 text-brand-crimson font-mono font-bold text-[10px] uppercase">
-                            Slot #{reg.slot_number}
-                          </span>
-                          <h4 className="font-display font-bold text-slate-900 dark:text-white text-sm">
-                            {tournament.title}
-                          </h4>
+                    <span>Find Tournaments</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+              ) : (
+                myRegistrations.map((reg) => {
+                  const dbTour = reg.tournaments;
+                  const mockTour = !dbTour ? dataStore.getTournament(reg.tournament_id) : null;
+                  const tournament = dbTour || mockTour;
+
+                  if (!tournament) return null;
+
+                  const tourId = tournament.id || reg.tournament_id;
+                  const tourTitle = tournament.title || "Official Tournament";
+                  const tourMode = tournament.mode || "Battle Royale";
+                  const tourStart = tournament.scheduled_start_at || (tournament as any).match_start;
+                  const tourPool = tournament.main_prize_pool_cents || 100000;
+                  const tourCurrency = tournament.currency || "BDT";
+
+                  const isPaid = reg.status === "APPROVED" || reg.status === "CHECKED_IN";
+
+                  return (
+                    <div
+                      key={reg.id}
+                      className="p-4 rounded-xl bg-surface-200 border border-surface-border space-y-3"
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="px-2 py-0.5 rounded bg-brand-crimson/10 text-brand-crimson font-mono font-bold text-[10px] uppercase">
+                              Slot #{reg.slot_number || "—"}
+                            </span>
+                            <h4 className="font-display font-bold text-slate-900 dark:text-white text-sm">
+                              {tourTitle}
+                            </h4>
+                          </div>
+                          <p className="text-xs text-slate-500 dark:text-gray-400 mt-1 font-mono">
+                            {tourMode} {tourStart ? `• Starts ${formatDateTime(tourStart)}` : ""}
+                          </p>
                         </div>
-                        <p className="text-xs text-slate-500 dark:text-gray-400 mt-1 font-mono">
-                          {tournament.mode} • Starts {formatDateTime(tournament.match_start)}
-                        </p>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          {reg.status === "CHECKED_IN" ? (
+                            <Badge variant="emerald">Checked In</Badge>
+                          ) : reg.status === "APPROVED" ? (
+                            <Badge variant="cyan">Paid / Confirmed</Badge>
+                          ) : reg.status === "PAYMENT_SUBMITTED" ? (
+                            <Badge variant="gold">Verifying Payment</Badge>
+                          ) : (
+                            <Badge variant="gold">Payment Pending</Badge>
+                          )}
+                        </div>
                       </div>
 
-                      <div className="flex items-center gap-2 shrink-0">
-                        {reg.status === "CHECKED_IN" ? (
-                          <Badge variant="emerald">Checked In</Badge>
-                        ) : reg.status === "APPROVED" ? (
-                          <Badge variant="cyan">Paid / Confirmed</Badge>
-                        ) : (
-                          <Badge variant="gold">Payment Pending</Badge>
-                        )}
-                      </div>
-                    </div>
+                      <div className="flex items-center justify-between pt-2 border-t border-surface-border/60 text-xs font-mono">
+                        <div className="flex items-center gap-4 text-slate-600 dark:text-gray-400">
+                          <span>
+                            Guaranteed Pool:{" "}
+                            <strong className="text-brand-gold font-bold">
+                              {formatCurrency(tourPool, tourCurrency)}
+                            </strong>
+                          </span>
+                        </div>
 
-                    <div className="flex items-center justify-between pt-2 border-t border-surface-border/60 text-xs font-mono">
-                      <div className="flex items-center gap-4 text-slate-600 dark:text-gray-400">
-                        <span>
-                          Guaranteed Pool:{" "}
-                          <strong className="text-brand-gold font-bold">
-                            {formatCurrency(tournament.main_prize_pool_cents, tournament.currency)}
-                          </strong>
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        {isPaid && (
+                        <div className="flex items-center gap-2">
+                          {isPaid && (
+                            <Link
+                              href={`/tournaments/${tourId}/room`}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-elevated hover:bg-surface-50 border border-surface-border text-slate-900 dark:text-gray-200 hover:text-brand-crimson font-mono text-xs font-bold transition-all shadow-sm"
+                            >
+                              <Lock className="w-3.5 h-3.5 text-brand-crimson" />
+                              <span>Room Access</span>
+                            </Link>
+                          )}
                           <Link
-                            href={`/tournaments/${tournament.id}/room`}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-elevated hover:bg-surface-50 border border-surface-border text-slate-900 dark:text-gray-200 hover:text-brand-crimson font-mono text-xs font-bold transition-all shadow-sm"
+                            href={`/tournaments/${tourId}`}
+                            className="text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors"
                           >
-                            <Lock className="w-3.5 h-3.5 text-brand-crimson" />
-                            <span>Room Access</span>
+                            Details →
                           </Link>
-                        )}
-                        <Link
-                          href={`/tournaments/${tournament.id}`}
-                          className="text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors"
-                        >
-                          Details →
-                        </Link>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })
+              )}
             </div>
           </div>
 

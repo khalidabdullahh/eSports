@@ -40,15 +40,6 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  // Always use supabase.auth.getUser() to authenticate the user server-side.
-  let user = null;
-  try {
-    const { data } = await supabase.auth.getUser();
-    user = data?.user ?? null;
-  } catch {
-    user = null;
-  }
-
   const { pathname } = request.nextUrl;
 
   // Protect designated private routes
@@ -58,11 +49,22 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith("/onboarding") ||
     pathname.startsWith("/notifications");
 
-  if (!user && isProtectedRoute) {
-    const loginUrl = request.nextUrl.clone();
-    loginUrl.pathname = "/login";
-    loginUrl.searchParams.set("redirect", pathname);
-    return NextResponse.redirect(loginUrl);
+  // Performance optimization: only execute network-blocking auth query for protected routes
+  if (isProtectedRoute) {
+    let user = null;
+    try {
+      const { data } = await supabase.auth.getUser();
+      user = data?.user ?? null;
+    } catch {
+      user = null;
+    }
+
+    if (!user) {
+      const loginUrl = request.nextUrl.clone();
+      loginUrl.pathname = "/login";
+      loginUrl.searchParams.set("redirect", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
   }
 
   return response;
