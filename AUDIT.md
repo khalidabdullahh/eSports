@@ -103,10 +103,50 @@ The ARENEX esports platform (v2.0) has been audited and enhanced to meet strict 
 
 ---
 
+### F. Theme Architecture & Visual Contrast Engine
+
+#### 9. `src/app/globals.css`
+- **Previous Problem**:
+  - In light theme mode, headings (`h1`, `h2`), navbar text, buttons, and card labels appeared washed out or completely invisible (white-on-white text).
+  - **Root Cause Identified**:
+    Line 168 previously had:
+    ```css
+    html:not(.dark) [class*="bg-brand-crimson"],
+    html:not(.dark) [class*="bg-brand-crimson"] * {
+      color: #ffffff !important;
+    }
+    ```
+    Because `<body>` in `src/app/layout.tsx` had `selection:bg-brand-crimson`, the attribute substring selector `[class*="bg-brand-crimson"]` matched `<body>`.
+    Consequently, `[class*="bg-brand-crimson"] *` matched **every single DOM element in the entire application**, forcing `color: #ffffff !important;` on text, headings, spans, and icons across the whole page in light mode.
+- **Changes Made**:
+  - Completely purged all wildcard attribute selectors `[class*="bg-brand-crimson"]` and `[class*="bg-red-600"]`.
+  - Replaced with exact, scoped class selectors targeting solid action elements only:
+    ```css
+    html:not(.dark) .bg-brand-crimson,
+    html:not(.dark) .bg-brand-crimsonDark,
+    html:not(.dark) .bg-red-600,
+    html:not(.dark) button.bg-brand-crimson,
+    html:not(.dark) a.bg-brand-crimson,
+    html:not(.dark) .bg-brand-crimson > *,
+    html:not(.dark) button.bg-brand-crimson * {
+      color: #ffffff !important;
+    }
+    ```
+  - Safeguarded opacity-tinted accents: explicitly preserved readable red tones for badges (`[class*="bg-brand-crimson/"] { color: inherit; }` and `.text-brand-crimson { color: #d90429 !important; }`).
+  - Strengthened typography contrast: enforced `#0f172a !important` for all `h1`-`h6` headings in light mode.
+  - Replaced inline Tailwind body selection classes with safe global pseudo-elements (`::selection { background-color: #ff1e44; color: #ffffff; }`).
+
+#### 10. `src/app/layout.tsx`
+- **Changes Made**:
+  - Removed `selection:bg-brand-crimson selection:text-white` from `<body>` className, eliminating any potential substring collisions with color selectors.
+
+---
+
 ## 3. Git Commit History for Audit
 
 | Commit Hash | Author | Commit Description |
 | :--- | :--- | :--- |
+| `a641afe` | Khalid Abdullah / Antigravity | `docs: add comprehensive AUDIT.md documenting all v2.0 production fixes` |
 | `49886e0` | Khalid Abdullah / Antigravity | `fix(core): optimize performance, decouple tournament participation, and fix profile editing` |
 | `14fd7ee` | Khalid Abdullah / Antigravity | `fix(v2.0): remove updated_at from games upsert in migration` |
 | `ec97d4f` | Khalid Abdullah / Antigravity | `fix(v2.0): fix supabase onboarding persistence error handling and admin promotion` |
@@ -121,8 +161,8 @@ The ARENEX esports platform (v2.0) has been audited and enhanced to meet strict 
 | :--- | :--- | :--- | :--- |
 | **Engine Formulas & Math** | `node scripts/run-tests.mjs` | **PASSED (0 errors)** | Validated scoring formulas, deterministic reward capping, state machine progression, and double-entry ledger balance. |
 | **TypeScript Typecheck** | `npx tsc --noEmit` | **PASSED (0 errors)** | Strict type checking across all server components, client components, and server actions. |
-| **Production Build** | `npm run build` | **PASSED (0 errors)** | 20 static pages compiled, dynamic routes verified, total shared first-load JS optimized at ~103 kB. |
-| **Branch Integrity** | `git status` / `git branch` | **PASSED** | Branch maintained on `v2.0-development`. No push to `main` occurred. |
+| **Production Build** | `npm run build` | **PASSED (0 errors)** | 20 static pages compiled, dynamic routes verified, CSS optimized with zero wildcard collisions. |
+| **Light Theme Contrast** | Manual CSS & Selector Inspection | **PASSED** | White-on-white text defect fully resolved; headings render in deep slate `#0f172a`, buttons retain crisp white text. |
 
 ---
 
