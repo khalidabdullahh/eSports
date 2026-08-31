@@ -31,7 +31,9 @@ export function MobileNav() {
               href={item.href}
               className={cn(
                 "flex flex-col items-center justify-center flex-1 py-1.5 transition-all text-xs font-medium relative",
-                isActive ? "text-brand-crimsonLight font-semibold" : "text-gray-400 hover:text-gray-200"
+                isActive
+                  ? "text-brand-crimson font-semibold"
+                  : "text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-gray-200"
               )}
             >
               <div className="relative">

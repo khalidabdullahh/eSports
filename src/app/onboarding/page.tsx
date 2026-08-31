@@ -228,13 +228,18 @@ export default function OnboardingPage() {
 
               <div className="space-y-3.5">
                 <div>
-                  <label className="block text-[11px] font-mono uppercase text-slate-700 dark:text-gray-400 font-bold mb-1">
-                    Display Name / Full Name *
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-[11px] font-mono uppercase text-slate-700 dark:text-gray-400 font-bold">
+                      Display Name / Full Name *
+                    </label>
+                    <span className="text-[10px] text-slate-500 dark:text-gray-400 font-mono">
+                      (example only)
+                    </span>
+                  </div>
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Rahat Islam"
+                    placeholder="Khalid Abdullah"
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl bg-surface-200 border border-surface-border text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:border-brand-crimson font-sans font-medium"

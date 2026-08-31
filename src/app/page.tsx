@@ -321,11 +321,11 @@ export default function HomePage() {
           </Link>
 
           <div className="p-5 rounded-xl bg-surface-100/60 border border-surface-border/60 relative overflow-hidden">
-            <div className="w-10 h-10 rounded-lg bg-gray-800 text-gray-400 flex items-center justify-center mb-3">
+            <div className="w-10 h-10 rounded-lg bg-slate-200 dark:bg-gray-800 text-slate-600 dark:text-gray-400 flex items-center justify-center mb-3">
               <Sparkles className="w-5 h-5" />
             </div>
             <div className="flex items-center gap-2">
-              <h3 className="font-display text-lg font-bold text-gray-300">Multi-Game Horizon</h3>
+              <h3 className="font-display text-lg font-bold text-slate-800 dark:text-gray-300">Multi-Game Horizon</h3>
               <Badge variant="outline" className="text-[10px]">COMING NEXT</Badge>
             </div>
             <p className="text-xs text-gray-500 mt-1">
