@@ -8,6 +8,7 @@ import {
   submitPaymentAction,
 } from "@/app/actions/tournament-actions";
 import { formatCurrency } from "@/lib/utils";
+import { ARENEX_BKASH_RECIPIENT_NUMBER } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { createClient } from "@/lib/supabase/client";
@@ -61,7 +62,7 @@ export default function TournamentRegisterPage() {
     gameUid: "1098234871",
   });
 
-  const bKashNumber = "01712-345678 (Official ARENEX Merchant)";
+  const bKashNumber = ARENEX_BKASH_RECIPIENT_NUMBER;
 
   useEffect(() => {
     async function loadData() {
@@ -115,7 +116,7 @@ export default function TournamentRegisterPage() {
   const isFreeCup = entryFeeCents === 0;
 
   const handleCopyNumber = () => {
-    navigator.clipboard.writeText("01712345678");
+    navigator.clipboard.writeText(ARENEX_BKASH_RECIPIENT_NUMBER);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -286,7 +287,7 @@ export default function TournamentRegisterPage() {
                     ARENEX bKash Recipient Number
                   </span>
                   <span className="font-mono text-base font-black text-[#e2136e] tracking-wider">
-                    01712-345678
+                    {ARENEX_BKASH_RECIPIENT_NUMBER}
                   </span>
                 </div>
                 <button
@@ -315,7 +316,7 @@ export default function TournamentRegisterPage() {
               </h4>
               <ol className="list-decimal list-inside space-y-1 text-xs font-mono text-slate-600 dark:text-gray-400">
                 <li>Open your bKash App on your mobile device.</li>
-                <li>Select <strong>Send Money</strong> or <strong>Payment</strong> to <span className="font-bold text-[#e2136e]">01712345678</span>.</li>
+                <li>Select <strong>Send Money</strong> or <strong>Payment</strong> to <span className="font-bold text-[#e2136e]">{ARENEX_BKASH_RECIPIENT_NUMBER}</span>.</li>
                 <li>Enter the exact tournament entry amount (<span className="font-bold text-slate-900 dark:text-white">{formatCurrency(entryFeeCents, currency)}</span>).</li>
                 <li>Copy the 10-digit <strong>Transaction ID (TrxID)</strong> from your bKash confirmation SMS or statement.</li>
                 <li>Paste the TrxID below and click Submit.</li>

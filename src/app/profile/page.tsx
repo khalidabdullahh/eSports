@@ -114,7 +114,7 @@ export default async function ProfilePage() {
       email: `${currentUser.username}@arenex.gg`,
       username: currentUser.username,
       displayName: currentUser.display_name,
-      phoneNumber: "01712345678",
+      phoneNumber: "01643526721",
       country: currentUser.country || "BD",
       avatarUrl: currentUser.avatar_url || "",
       role: currentUser.role,
@@ -129,7 +129,7 @@ export default async function ProfilePage() {
     };
     initialPayout = {
       payoutMethod: "bkash",
-      payoutNumber: "01712345678",
+      payoutNumber: "01643526721",
       accountHolderName: currentUser.display_name,
       isVerified: true,
     };
