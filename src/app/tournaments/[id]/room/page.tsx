@@ -155,14 +155,49 @@ export default async function TournamentRoomPage({
           </div>
         </div>
 
+        {/* Option B: Pending Payment Confirmation Banner */}
+        {userRegistration?.status === "PAYMENT_SUBMITTED" && !isStaff && (
+          <div className="p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 space-y-2 animate-fadeIn">
+            <div className="flex items-center gap-2 text-amber-400 font-display font-bold text-sm uppercase">
+              <Clock className="w-4 h-4" />
+              <span>Payment Confirmation in Progress (Option B)</span>
+            </div>
+            <p className="text-xs text-gray-300 font-sans leading-relaxed">
+              Your bKash transaction ID is currently in the Super Admin confirmation queue. Per ARENEX Option B protocol, room ID and lobby password will decrypt automatically once the Super Admin confirms your payment.
+            </p>
+          </div>
+        )}
+
+        {/* Unpaid / Unregistered Notice */}
+        {(!userRegistration || userRegistration.status === "PENDING_PAYMENT") && !isStaff && (
+          <div className="p-5 rounded-2xl bg-red-500/10 border border-red-500/30 space-y-3 animate-fadeIn">
+            <div className="flex items-center gap-2 text-red-400 font-display font-bold text-sm uppercase">
+              <Lock className="w-4 h-4" />
+              <span>Payment Verification Required to Access Room</span>
+            </div>
+            <p className="text-xs text-gray-300 font-sans leading-relaxed">
+              You must register for this tournament and submit your bKash entry payment to receive authorized room access credentials.
+            </p>
+            <Link
+              href={`/tournaments/${tournament.id}/register`}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-crimson hover:bg-brand-crimsonDark text-white font-display font-bold text-xs uppercase tracking-wider transition-all shadow-md shadow-brand-crimson/20"
+            >
+              <span>Go to Tournament Registration & Payment</span>
+              <ArrowLeft className="w-3.5 h-3.5 rotate-180" />
+            </Link>
+          </div>
+        )}
+
         {/* Interactive Check-In & Room Credential Client */}
-        <RoomGateClient
-          tournamentId={tournament.id}
-          registrationId={userRegistration?.id}
-          registrationStatus={userRegistration?.status}
-          isStaff={isStaff}
-          roomReleaseTime={tournament.room_release_time}
-        />
+        {isEligible && (
+          <RoomGateClient
+            tournamentId={tournament.id}
+            registrationId={userRegistration?.id}
+            registrationStatus={userRegistration?.status}
+            isStaff={isStaff}
+            roomReleaseTime={tournament.room_release_time}
+          />
+        )}
 
         {/* Security Warning */}
         <div className="p-4 rounded-xl bg-surface-200/60 border border-surface-border/80 flex items-start gap-3 text-xs text-gray-400">

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useTransition } from "react";
+import React, { useState, useEffect, useTransition } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -10,6 +10,7 @@ import {
 import { formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { createClient } from "@/lib/supabase/client";
 import {
   Trophy,
   ArrowLeft,
@@ -19,6 +20,10 @@ import {
   Check,
   Shield,
   Smartphone,
+  CreditCard,
+  Lock,
+  ArrowRight,
+  Sparkles,
 } from "lucide-react";
 
 export default function TournamentRegisterPage() {
@@ -30,15 +35,84 @@ export default function TournamentRegisterPage() {
   const [paymentMethod, setPaymentMethod] = useState<"bkash" | "nagad" | "rocket">("bkash");
   const [transactionId, setTransactionId] = useState("");
   const [senderPhone, setSenderPhone] = useState("");
-  const [evidenceUrl, setEvidenceUrl] = useState("");
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [registeredSlot, setRegisteredSlot] = useState<number | null>(null);
   const [registeredId, setRegisteredId] = useState<string | null>(null);
 
-  const entryFeeCents = 5000; // ৳50.00
-  const bKashNumber = "01712-345678 (Merchant / Personal)";
+  // Dynamic tournament & profile state
+  const [tournament, setTournament] = useState<{
+    id: string;
+    title: string;
+    mode: string;
+    format: string;
+    entry_fee_cents: number;
+    currency: string;
+  } | null>(null);
+
+  const [playerIdentity, setPlayerIdentity] = useState<{
+    displayName: string;
+    inGameName: string;
+    gameUid: string;
+  }>({
+    displayName: "Warrior",
+    inGameName: "ALPHA〆KILLER",
+    gameUid: "1098234871",
+  });
+
+  const bKashNumber = "01712-345678 (Official ARENEX Merchant)";
+
+  useEffect(() => {
+    async function loadData() {
+      const supabase = createClient();
+
+      // 1. Fetch Tournament
+      const { data: tour } = await supabase
+        .from("tournaments")
+        .select("id, title, mode, format, entry_fee_cents, currency")
+        .eq("id", tournamentId)
+        .maybeSingle();
+
+      if (tour) {
+        setTournament(tour);
+      } else {
+        // Fallback default
+        setTournament({
+          id: tournamentId,
+          title: "Dhaka Night Battle — Solo Cup",
+          mode: "Battle Royale — Bermuda",
+          format: "SOLO",
+          entry_fee_cents: 5000,
+          currency: "BDT",
+        });
+      }
+
+      // 2. Fetch User & Game Account
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (user) {
+        const [profRes, gameRes] = await Promise.all([
+          supabase.from("profiles").select("display_name").eq("id", user.id).maybeSingle(),
+          supabase.from("game_accounts").select("in_game_name, game_uid").eq("user_id", user.id).limit(1).maybeSingle(),
+        ]);
+
+        setPlayerIdentity({
+          displayName: profRes.data?.display_name || user.email?.split("@")[0] || "Warrior",
+          inGameName: gameRes.data?.in_game_name || "ALPHA〆KILLER",
+          gameUid: gameRes.data?.game_uid || "1098234871",
+        });
+      }
+    }
+
+    loadData();
+  }, [tournamentId]);
+
+  const entryFeeCents = tournament?.entry_fee_cents ?? 5000;
+  const currency = tournament?.currency || "BDT";
+  const isFreeCup = entryFeeCents === 0;
 
   const handleCopyNumber = () => {
     navigator.clipboard.writeText("01712345678");
@@ -54,16 +128,21 @@ export default function TournamentRegisterPage() {
         setError(res.error || "Failed to register slot");
         return;
       }
-      setRegisteredSlot(res.registration?.slot_number || 49);
+      setRegisteredSlot(res.registration?.slot_number || 1);
       setRegisteredId(res.registration?.id || null);
-      setStep("payment");
+
+      if (isFreeCup || res.registration?.status === "APPROVED") {
+        setStep("confirmed");
+      } else {
+        setStep("payment");
+      }
     });
   };
 
   const handleSubmitPayment = (e: React.FormEvent) => {
     e.preventDefault();
     if (!transactionId.trim()) {
-      setError("Please enter the 10-digit transaction ID from your SMS/app");
+      setError("Please enter the 10-digit transaction ID from your bKash SMS or app.");
       return;
     }
 
@@ -74,7 +153,7 @@ export default function TournamentRegisterPage() {
         registeredId || `reg-${tournamentId}`,
         entryFeeCents,
         paymentMethod,
-        transactionId.trim(),
+        transactionId.trim().toUpperCase(),
         senderPhone.trim()
       );
 
@@ -91,170 +170,184 @@ export default function TournamentRegisterPage() {
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10 space-y-6">
       <Link
         href={`/tournaments/${tournamentId}`}
-        className="inline-flex items-center gap-2 text-xs font-mono text-gray-400 hover:text-white"
+        className="inline-flex items-center gap-2 text-xs font-mono text-slate-500 dark:text-gray-400 hover:text-slate-950 dark:hover:text-white transition-colors"
       >
         <ArrowLeft className="w-3.5 h-3.5" />
-        Back to Tournament Details
+        <span>Back to Tournament Details</span>
       </Link>
 
-      <div className="rounded-2xl bg-surface-100 border border-surface-border p-6 sm:p-8 space-y-6">
+      <div className="rounded-3xl bg-surface-100 border border-surface-border p-6 sm:p-8 space-y-6 shadow-2xl">
         {/* Header */}
         <div className="border-b border-surface-border pb-5">
           <div className="flex items-center gap-2 mb-2">
-            <Trophy className="w-5 h-5 text-cyan-400" />
-            <Badge variant="cyan">Official Registration</Badge>
+            <Trophy className="w-5 h-5 text-brand-crimson" />
+            <Badge variant="cyan">Official Tournament Checkout</Badge>
           </div>
-          <h1 className="font-display text-2xl sm:text-3xl font-black text-white uppercase">
-            Tournament Entry Checkout
+          <h1 className="font-display text-2xl sm:text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
+            {tournament?.title || "Tournament Entry Checkout"}
           </h1>
-          <p className="text-xs text-gray-400 mt-1">
-            Lock your slot and verify entry fee to receive authorized room access upon check-in
+          <p className="text-xs text-slate-600 dark:text-gray-400 mt-1 font-sans">
+            Lock your reserved slot and verify entry fee to receive authorized custom room access.
           </p>
         </div>
 
         {error && (
-          <div className="p-3.5 rounded-lg bg-red-500/10 border border-red-500/30 text-xs text-red-400 flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>{error}</span>
+          <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-xs font-mono text-red-500 flex items-start gap-2.5">
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+            <span className="font-medium">{error}</span>
           </div>
         )}
 
-        {/* Step 1: Slot Allocation */}
+        {/* STEP 1: SLOT ALLOCATION */}
         {step === "slot" && (
-          <div className="space-y-6">
-            <div className="p-4 rounded-xl bg-surface-200 border border-surface-border space-y-3 font-mono text-xs">
+          <div className="space-y-6 animate-fadeIn">
+            <div className="p-5 rounded-2xl bg-surface-200 border border-surface-border space-y-3 font-mono text-xs shadow-sm">
               <div className="flex justify-between">
-                <span className="text-gray-400">Tournament:</span>
-                <span className="font-bold text-white">Night Battle — Solo Cup</span>
+                <span className="text-slate-500 dark:text-gray-400">Tournament Title:</span>
+                <span className="font-bold text-slate-900 dark:text-white">
+                  {tournament?.title || "Night Battle Solo Cup"}
+                </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-400">Format:</span>
-                <span className="text-gray-200">Free Fire Solo Battle Royale</span>
+                <span className="text-slate-500 dark:text-gray-400">Battle Format:</span>
+                <span className="text-slate-700 dark:text-gray-200">
+                  {tournament?.mode || "Battle Royale — Bermuda (Solo)"}
+                </span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400">Entry Fee:</span>
-                <span className="font-bold text-amber-400 text-sm">
-                  {formatCurrency(entryFeeCents, "BDT")}
+              <div className="flex justify-between border-t border-surface-border/60 pt-2">
+                <span className="text-slate-500 dark:text-gray-400 font-bold">Required Entry Ticket:</span>
+                <span className="font-black text-brand-crimson text-sm">
+                  {isFreeCup ? "FREE (৳0.00)" : formatCurrency(entryFeeCents, currency)}
                 </span>
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-mono uppercase text-gray-300 block">
-                Player In-Game Identity
+              <label className="text-xs font-mono uppercase text-slate-700 dark:text-gray-300 font-bold block">
+                Your Verified In-Game Identity
               </label>
-              <input
-                type="text"
-                disabled
-                value="ALPHA〆KILLER (UID: 1098234871)"
-                className="w-full px-4 py-2.5 rounded-lg bg-surface-elevated border border-surface-border text-gray-200 text-sm font-mono cursor-not-allowed"
-              />
-              <p className="text-[11px] text-gray-500">
-                Your Free Fire UID will be checked by referees in the custom match lobby.
+              <div className="p-3.5 rounded-xl bg-surface-elevated border border-surface-border flex items-center justify-between text-xs font-mono">
+                <div>
+                  <span className="font-bold text-brand-crimson text-sm block">
+                    {playerIdentity.inGameName}
+                  </span>
+                  <span className="text-slate-500 dark:text-gray-400">
+                    Free Fire UID: <strong className="text-slate-800 dark:text-gray-200">{playerIdentity.gameUid}</strong>
+                  </span>
+                </div>
+                <Link
+                  href="/profile"
+                  className="text-[11px] text-cyan-500 hover:underline font-bold"
+                >
+                  Edit Profile →
+                </Link>
+              </div>
+              <p className="text-[10px] text-slate-500 dark:text-gray-400 font-mono">
+                Referees match this verified in-game UID to validate match kills and prize payouts.
               </p>
             </div>
 
             <Button
               onClick={handleLockSlot}
               isLoading={isPending}
-              className="w-full py-3 text-sm font-bold uppercase tracking-wider"
+              className="w-full py-3.5 text-xs font-display font-black uppercase tracking-widest bg-brand-crimson hover:bg-brand-crimsonDark text-white shadow-xl shadow-brand-crimson/25"
             >
-              Lock Slot & Proceed to Payment
+              {isFreeCup ? "Claim Free Entry Spot" : "Lock Slot & Proceed to bKash Payment"}
             </Button>
           </div>
         )}
 
-        {/* Step 2: Payment Details */}
+        {/* STEP 2: bKASH MERCHANT PAYMENT UI */}
         {step === "payment" && (
-          <form onSubmit={handleSubmitPayment} className="space-y-6">
-            <div className="p-4 rounded-xl bg-cyan-950/20 border border-cyan-800/40 text-xs space-y-2">
-              <div className="flex items-center gap-2 text-cyan-300 font-semibold">
-                <CheckCircle2 className="w-4 h-4" />
-                <span>Slot #{registeredSlot || 49} Temporarily Reserved for 15 minutes</span>
-              </div>
-              <p className="text-gray-400">
-                Complete your payment below to confirm your spot in the official roster.
-              </p>
-            </div>
-
-            {/* Payment Method Selector */}
-            <div className="space-y-2">
-              <label className="text-xs font-mono uppercase text-gray-300 block">
-                Select Payment Method
-              </label>
-              <div className="grid grid-cols-3 gap-3">
-                {(["bkash", "nagad", "rocket"] as const).map((method) => (
-                  <button
-                    key={method}
-                    type="button"
-                    onClick={() => setPaymentMethod(method)}
-                    className={`py-2.5 px-3 rounded-lg border text-xs font-bold uppercase transition-all ${
-                      paymentMethod === method
-                        ? "bg-cyan-500 text-black border-cyan-400 shadow-md shadow-cyan-500/20"
-                        : "bg-surface-200 text-gray-300 border-surface-border hover:bg-surface-elevated"
-                    }`}
-                  >
-                    {method}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Send Money Instructions */}
-            <div className="p-4 rounded-xl bg-surface-200 border border-surface-border space-y-3">
+          <form onSubmit={handleSubmitPayment} className="space-y-6 animate-fadeIn">
+            {/* bKash Header Banner */}
+            <div className="p-5 rounded-2xl bg-[#e2136e]/10 border border-[#e2136e]/30 space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-mono uppercase text-gray-400">Send Money To:</span>
-                <span className="text-xs font-mono font-bold text-amber-400">
-                  Exact Amount: {formatCurrency(entryFeeCents, "BDT")}
-                </span>
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-[#e2136e] flex items-center justify-center font-display font-black text-white text-sm">
+                    ৳
+                  </div>
+                  <div>
+                    <h3 className="font-display text-sm font-bold text-slate-900 dark:text-white uppercase">
+                      bKash Merchant Payment
+                    </h3>
+                    <p className="text-[11px] text-slate-600 dark:text-gray-300 font-mono">
+                      Manual Merchant Confirmation Portal
+                    </p>
+                  </div>
+                </div>
+                <Badge variant="crimson">Slot #{registeredSlot || 1} Reserved</Badge>
               </div>
-              <div className="flex items-center justify-between p-2.5 rounded-lg bg-surface-elevated border border-surface-border">
-                <span className="font-mono text-sm text-white font-bold">{bKashNumber}</span>
+
+              {/* Account Number Card */}
+              <div className="p-3.5 rounded-xl bg-surface-100 border border-surface-border flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] uppercase font-mono tracking-wider text-slate-500 dark:text-gray-400 font-bold block">
+                    ARENEX bKash Recipient Number
+                  </span>
+                  <span className="font-mono text-base font-black text-[#e2136e] tracking-wider">
+                    01712-345678
+                  </span>
+                </div>
                 <button
                   type="button"
                   onClick={handleCopyNumber}
-                  className="p-1.5 rounded hover:bg-surface-border text-gray-400 hover:text-white transition-colors"
+                  className="px-3 py-1.5 rounded-lg bg-surface-elevated hover:bg-surface-50 border border-surface-border text-xs font-mono font-bold text-slate-800 dark:text-gray-200 flex items-center gap-1.5 transition-all shadow-sm"
                 >
-                  {copied ? (
-                    <Check className="w-4 h-4 text-emerald-400" />
-                  ) : (
-                    <Copy className="w-4 h-4" />
-                  )}
+                  {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                  <span>{copied ? "Copied!" : "Copy"}</span>
                 </button>
               </div>
-              <p className="text-[11px] text-gray-500 font-mono">
-                1. Open your {paymentMethod.toUpperCase()} app. <br />
-                2. Select &quot;Send Money&quot; or &quot;Payment&quot; to the number above. <br />
-                3. Copy the Transaction ID from the confirmation SMS or receipt.
-              </p>
+
+              {/* Exact Amount Notice */}
+              <div className="flex items-center justify-between text-xs font-mono pt-1">
+                <span className="text-slate-600 dark:text-gray-400">Exact Entry Amount:</span>
+                <span className="font-black text-slate-900 dark:text-white text-base">
+                  {formatCurrency(entryFeeCents, currency)}
+                </span>
+              </div>
             </div>
 
-            {/* Form Fields */}
+            {/* Step-by-Step Instructions */}
+            <div className="p-4 rounded-xl bg-surface-200 border border-surface-border space-y-2 text-xs font-sans text-slate-700 dark:text-gray-300">
+              <h4 className="font-display font-bold uppercase text-[11px] text-slate-900 dark:text-white tracking-wider">
+                How to Complete Payment:
+              </h4>
+              <ol className="list-decimal list-inside space-y-1 text-xs font-mono text-slate-600 dark:text-gray-400">
+                <li>Open your bKash App on your mobile device.</li>
+                <li>Select <strong>Send Money</strong> or <strong>Payment</strong> to <span className="font-bold text-[#e2136e]">01712345678</span>.</li>
+                <li>Enter the exact tournament entry amount (<span className="font-bold text-slate-900 dark:text-white">{formatCurrency(entryFeeCents, currency)}</span>).</li>
+                <li>Copy the 10-digit <strong>Transaction ID (TrxID)</strong> from your bKash confirmation SMS or statement.</li>
+                <li>Paste the TrxID below and click Submit.</li>
+              </ol>
+            </div>
+
+            {/* Input Fields */}
             <div className="space-y-4">
               <div>
-                <label className="text-xs font-mono uppercase text-gray-300 block mb-1.5">
-                  Transaction ID (TrxID) *
+                <label className="block text-[11px] font-mono uppercase text-slate-700 dark:text-gray-400 font-bold mb-1.5">
+                  bKash Transaction ID (TrxID) *
                 </label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. 9KA827L190"
+                  placeholder="e.g. BL92A8ZK91"
                   value={transactionId}
-                  onChange={(e) => setTransactionId(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-lg bg-surface-elevated border border-surface-border text-white text-sm font-mono focus:border-cyan-400 focus:outline-none"
+                  onChange={(e) => setTransactionId(e.target.value.toUpperCase())}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-surface-200 border border-surface-border text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:border-brand-crimson font-mono font-bold uppercase tracking-wider"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-mono uppercase text-gray-300 block mb-1.5">
-                  Sender Phone Number
+                <label className="block text-[11px] font-mono uppercase text-slate-700 dark:text-gray-400 font-bold mb-1.5">
+                  Sender Mobile Number (Optional)
                 </label>
                 <input
                   type="tel"
                   placeholder="e.g. 017XXXXXXXX"
                   value={senderPhone}
                   onChange={(e) => setSenderPhone(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-lg bg-surface-elevated border border-surface-border text-white text-sm font-mono focus:border-cyan-400 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-surface-200 border border-surface-border text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:border-brand-crimson font-mono font-medium"
                 />
               </div>
             </div>
@@ -262,38 +355,63 @@ export default function TournamentRegisterPage() {
             <Button
               type="submit"
               isLoading={isPending}
-              className="w-full py-3 text-sm font-bold uppercase tracking-wider"
+              className="w-full py-3.5 text-xs font-display font-black uppercase tracking-widest bg-brand-crimson hover:bg-brand-crimsonDark text-white shadow-xl shadow-brand-crimson/25"
             >
-              Submit Payment for Verification
+              Submit Payment for Super Admin Confirmation
             </Button>
           </form>
         )}
 
-        {/* Step 3: Confirmation */}
+        {/* STEP 3: SUBMITTED CONFIRMATION & ROOM OPTION B */}
         {step === "confirmed" && (
-          <div className="text-center py-6 space-y-4">
-            <div className="w-14 h-14 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center justify-center mx-auto">
-              <CheckCircle2 className="w-7 h-7" />
+          <div className="space-y-6 text-center py-4 animate-fadeIn">
+            <div className="w-16 h-16 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center justify-center mx-auto shadow-xl">
+              <CheckCircle2 className="w-8 h-8" />
             </div>
-            <h2 className="font-display text-2xl font-black text-white uppercase">
-              Payment Submitted Successfully!
-            </h2>
-            <p className="text-xs text-gray-400 max-w-md mx-auto leading-relaxed">
-              Your transaction <span className="font-mono text-cyan-300 font-bold">{transactionId}</span> has been queued for verification. The finance desk will verify your payment against the append-only ledger shortly.
-            </p>
 
-            <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
-              <Link
-                href="/dashboard"
-                className="px-5 py-2.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-black font-bold text-xs uppercase tracking-wider transition-all"
-              >
-                Go to Player Dashboard
-              </Link>
+            <div className="space-y-2">
+              <span className="text-[11px] font-mono font-bold text-emerald-400 uppercase tracking-widest">
+                {isFreeCup ? "Slot Confirmed" : "Payment Verification in Progress"}
+              </span>
+              <h2 className="font-display text-2xl sm:text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
+                {isFreeCup ? "You Are In!" : "Payment Submitted to Super Admin"}
+              </h2>
+              <p className="text-xs text-slate-600 dark:text-gray-300 font-sans max-w-md mx-auto leading-relaxed">
+                {isFreeCup
+                  ? "Your free entry spot is locked. Head to the tournament room when check-in opens."
+                  : `Your transaction ID (${transactionId || "SUBMITTED"}) has been queued for Super Admin review. Per ARENEX Option B security policy, custom match room credentials unlock automatically once verified.`}
+              </p>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-surface-200 border border-surface-border max-w-md mx-auto text-left text-xs font-mono space-y-2">
+              <div className="flex justify-between">
+                <span className="text-slate-500 dark:text-gray-400">Tournament:</span>
+                <span className="font-bold text-slate-900 dark:text-white">{tournament?.title}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500 dark:text-gray-400">Confirmed Slot:</span>
+                <span className="font-bold text-amber-400">#{registeredSlot || 1}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500 dark:text-gray-400">Room Status:</span>
+                <span className="font-bold text-emerald-400">
+                  {isFreeCup ? "Eligible for Check-In" : "Pending Admin Approval (Option B)"}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
               <Link
                 href={`/tournaments/${tournamentId}/room`}
-                className="px-5 py-2.5 rounded-lg bg-surface-elevated hover:bg-surface-50 text-gray-200 text-xs font-semibold uppercase tracking-wider border border-surface-border transition-all"
+                className="w-full sm:w-auto px-6 py-3 rounded-xl bg-brand-crimson hover:bg-brand-crimsonDark text-white font-display font-bold text-xs uppercase tracking-wider shadow-lg shadow-brand-crimson/25 transition-all"
               >
-                Check Room Key Countdown
+                Go to Match Room
+              </Link>
+              <Link
+                href="/dashboard"
+                className="w-full sm:w-auto px-6 py-3 rounded-xl bg-surface-elevated hover:bg-surface-50 border border-surface-border text-slate-800 dark:text-gray-200 font-display font-bold text-xs uppercase tracking-wider transition-all"
+              >
+                Return to Dashboard
               </Link>
             </div>
           </div>

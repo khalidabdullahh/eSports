@@ -288,3 +288,155 @@ export async function updateTournamentStatusAction(
     return { success: false, error: (err as Error).message || "Failed to update status." };
   }
 }
+
+/**
+ * Super Admin action: Updates stream embed URL (Facebook Live, YouTube, Twitch) for a tournament
+ */
+export async function updateTournamentStreamAction(
+  tournamentId: string,
+  streamUrl: string,
+  streamPlatform = "facebook"
+) {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user: authUser },
+    } = await supabase.auth.getUser();
+
+    if (authUser && isSupabaseConfigured) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", authUser.id)
+        .single();
+
+      const isStaff =
+        profile?.role === "SUPER_ADMIN" ||
+        profile?.role === "OWNER" ||
+        profile?.role === "TOURNAMENT_ADMIN" ||
+        profile?.role === "REFEREE";
+
+      if (!isStaff) {
+        return { success: false, error: "Unauthorized: Admin privileges required." };
+      }
+
+      await supabase
+        .from("tournaments")
+        .update({
+          stream_url: streamUrl.trim() || null,
+          stream_platform: streamPlatform,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", tournamentId);
+
+      await supabase.from("audit_logs").insert({
+        actor_id: authUser.id,
+        action: "UPDATE_TOURNAMENT_STREAM",
+        target_type: "TOURNAMENT",
+        target_id: tournamentId,
+        details: { streamUrl, streamPlatform },
+      });
+
+      revalidatePath("/live");
+      revalidatePath(`/tournaments/${tournamentId}`);
+      revalidatePath("/admin");
+      return { success: true };
+    }
+
+    if (!isProduction && !isSupabaseConfigured) {
+      const tour = dataStore.getTournament(tournamentId);
+      if (tour) {
+        tour.stream_url = streamUrl.trim();
+      }
+      revalidatePath("/live");
+      revalidatePath(`/tournaments/${tournamentId}`);
+      revalidatePath("/admin");
+      return { success: true };
+    }
+
+    return { success: false, error: "Database configuration error." };
+  } catch (err: unknown) {
+    return { success: false, error: (err as Error).message || "Failed to update stream configuration." };
+  }
+}
+
+/**
+ * Super Admin action: Configures or updates cryptographic room credentials
+ */
+export async function updateRoomCredentialsAction(
+  tournamentId: string,
+  roomName: string,
+  roomPassword: string,
+  releaseAt?: string
+) {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user: authUser },
+    } = await supabase.auth.getUser();
+
+    if (authUser && isSupabaseConfigured) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", authUser.id)
+        .single();
+
+      const isStaff =
+        profile?.role === "SUPER_ADMIN" ||
+        profile?.role === "OWNER" ||
+        profile?.role === "TOURNAMENT_ADMIN" ||
+        profile?.role === "REFEREE";
+
+      if (!isStaff) {
+        return { success: false, error: "Unauthorized: Admin privileges required." };
+      }
+
+      const releaseTime = releaseAt || new Date().toISOString();
+
+      const { error: upsertErr } = await supabase.from("room_credentials").upsert(
+        {
+          tournament_id: tournamentId,
+          room_name: roomName.trim(),
+          room_password: roomPassword.trim(),
+          release_at: releaseTime,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "tournament_id" }
+      );
+
+      if (upsertErr) {
+        return { success: false, error: upsertErr.message };
+      }
+
+      await supabase.from("audit_logs").insert({
+        actor_id: authUser.id,
+        action: "SET_ROOM_CREDENTIALS",
+        target_type: "ROOM_CREDENTIALS",
+        target_id: tournamentId,
+        details: { roomName, releaseTime },
+      });
+
+      revalidatePath(`/tournaments/${tournamentId}/room`);
+      revalidatePath("/admin");
+      return { success: true };
+    }
+
+    if (!isProduction && !isSupabaseConfigured) {
+      dataStore.setRoomCredential(
+        tournamentId,
+        roomName.trim(),
+        roomPassword.trim(),
+        releaseAt || new Date().toISOString()
+      );
+      revalidatePath(`/tournaments/${tournamentId}/room`);
+      revalidatePath("/admin");
+      return { success: true };
+    }
+
+    return { success: false, error: "Database configuration error." };
+  } catch (err: unknown) {
+    return { success: false, error: (err as Error).message || "Failed to update room credentials." };
+  }
+}
+

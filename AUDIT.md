@@ -1,9 +1,10 @@
-# ARENEX v2.0 — Comprehensive Production Audit & Change Log
+# ARENEX v2.1 — Production Audit & Master Change Log
 
 **File**: `AUDIT.md`  
+**Detailed Technical Audit**: `docs/audits/ARENEX_V2.1_AUDIT.md`  
 **Target Repository**: `https://github.com/khalidabdullahh/eSports.git`  
-**Active Branch**: `v2.0-development`  
-**Audit Date**: August 31, 2026  
+**Release Version**: `ARENEX v2.1` (`2.1.0`)  
+**Audit Date**: September 01, 2026  
 **Auditor**: Antigravity AI Engineering Suite  
 
 ---

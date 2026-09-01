@@ -42,12 +42,10 @@ export default function HomePage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
             {/* Left: Brand Hero */}
             <div className="lg:col-span-7 space-y-6">
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <ArenexLogo variant="symbol" size="lg" />
-                  <span className="font-display font-extrabold text-2xl sm:text-3xl tracking-[0.2em] text-gray-400 uppercase">
-                    ARE<span className="text-brand-crimson">NEX</span>
-                  </span>
+              <div className="space-y-4">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand-crimson/10 border border-brand-crimson/30 text-brand-crimson text-xs font-mono font-bold uppercase tracking-wider shadow-sm">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Next-Gen Competitive Esports Ecosystem</span>
                 </div>
 
                 <h1 className="font-display text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-slate-900 dark:text-white uppercase leading-[1.02]">

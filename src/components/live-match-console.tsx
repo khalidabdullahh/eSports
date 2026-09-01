@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { Match, MatchEvent, Tournament } from "@/types";
 import { Badge } from "./ui/badge";
-import { formatCurrency, formatRelativeTime } from "@/lib/utils";
+import { formatCurrency, formatRelativeTime, getStreamEmbedUrl } from "@/lib/utils";
 import {
   Radio,
   Trophy,
@@ -157,9 +157,9 @@ export function LiveMatchConsole({
         <div className="lg:col-span-7 space-y-6">
           {/* Stream Embed Area */}
           <div className="relative aspect-video rounded-2xl overflow-hidden bg-black border border-surface-border shadow-2xl">
-            {tournament.stream_url ? (
+            {tournament.stream_url && getStreamEmbedUrl(tournament.stream_url) ? (
               <iframe
-                src={`${tournament.stream_url}?autoplay=0&mute=1`}
+                src={getStreamEmbedUrl(tournament.stream_url)!}
                 title="Live Esports Match Stream"
                 className="w-full h-full"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"

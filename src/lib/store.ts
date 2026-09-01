@@ -445,6 +445,23 @@ class EsportsDataStore {
     return cred;
   }
 
+  setRoomCredential(
+    tournamentId: string,
+    roomId: string,
+    roomPassword: string,
+    releaseAt: string
+  ): RoomCredential {
+    const cred: RoomCredential = {
+      id: `cred-${tournamentId}`,
+      tournament_id: tournamentId,
+      room_id: roomId,
+      room_password: roomPassword,
+      release_at: releaseAt,
+    };
+    this.roomCredentials.set(tournamentId, cred);
+    return cred;
+  }
+
   // --- Match & Referee Operations ---
   getMatch(matchId: string): Match | undefined {
     return this.matches.get(matchId);

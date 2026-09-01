@@ -68,3 +68,49 @@ export function formatRelativeTime(isoString: string): string {
     return isoString;
   }
 }
+
+/**
+ * Transforms raw stream URLs (Facebook Live, YouTube, Twitch) into compliant iframe embed URLs
+ */
+export function getStreamEmbedUrl(url?: string | null): string | null {
+  if (!url || typeof url !== "string" || !url.trim()) return null;
+  const cleanUrl = url.trim();
+
+  // Facebook Live / Videos
+  if (cleanUrl.includes("facebook.com") || cleanUrl.includes("fb.watch")) {
+    return `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(cleanUrl)}&show_text=false&autoplay=true`;
+  }
+
+  // YouTube (watch, short, live)
+  if (cleanUrl.includes("youtube.com/watch")) {
+    const match = cleanUrl.match(/[?&]v=([^&]+)/);
+    if (match?.[1]) {
+      return `https://www.youtube.com/embed/${match[1]}?autoplay=1&mute=1`;
+    }
+  }
+
+  if (cleanUrl.includes("youtu.be/")) {
+    const videoId = cleanUrl.split("youtu.be/")[1]?.split("?")[0];
+    if (videoId) {
+      return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1`;
+    }
+  }
+
+  if (cleanUrl.includes("youtube.com/live/")) {
+    const videoId = cleanUrl.split("youtube.com/live/")[1]?.split("?")[0];
+    if (videoId) {
+      return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1`;
+    }
+  }
+
+  // Twitch
+  if (cleanUrl.includes("twitch.tv/")) {
+    const channel = cleanUrl.split("twitch.tv/")[1]?.split("/")[0]?.split("?")[0];
+    if (channel) {
+      return `https://player.twitch.tv/?channel=${channel}&parent=localhost&autoplay=true&muted=true`;
+    }
+  }
+
+  return cleanUrl;
+}
+

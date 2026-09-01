@@ -1,8 +1,10 @@
+import React, { Suspense } from "react";
 import type { Metadata } from "next";
 import "./globals.css";
 import { Navbar } from "@/components/navbar";
 import { MobileNav } from "@/components/mobile-nav";
 import { Footer } from "@/components/footer";
+import { NavigationProgress } from "@/components/ui/navigation-progress";
 
 export const metadata: Metadata = {
   title: "ARENEX — Where Players Compete. Legends Rise.",
@@ -55,6 +57,9 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-screen flex flex-col bg-background text-slate-900 dark:text-gray-100 antialiased font-sans">
+        <Suspense fallback={null}>
+          <NavigationProgress />
+        </Suspense>
         <Navbar />
         <main className="flex-1 w-full">{children}</main>
         <Footer />

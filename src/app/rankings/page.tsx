@@ -204,7 +204,10 @@ export default function RankingsPage() {
                   <td className="py-3.5 px-3">
                     <div className="flex items-center gap-2.5">
                       <img
-                        src={p.avatar_url}
+                        src={
+                          p.avatar_url ||
+                          "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80"
+                        }
                         alt={p.participant_name}
                         className="w-7 h-7 rounded-full object-cover ring-1 ring-surface-border"
                       />

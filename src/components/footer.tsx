@@ -1,8 +1,18 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { ShieldCheck, Zap, Lock, Award, Sparkles } from "lucide-react";
 import { ArenexLogo } from "./brand/arenex-logo";
 
 export function Footer() {
+  const pathname = usePathname();
+
+  // Super Admin operational consoles should not render the public marketing footer
+  if (pathname?.startsWith("/admin")) {
+    return null;
+  }
+
   return (
     <footer className="w-full bg-surface-300 border-t border-surface-border mt-20 pb-20 md:pb-12 text-sm text-gray-400">
       {/* Fair Play & Trust Bar */}
@@ -198,8 +208,8 @@ export function Footer() {
           </div>
 
           <div className="flex items-center gap-4">
-            <span className="px-2 py-0.5 rounded bg-surface-200 border border-surface-border text-[10px] font-mono text-brand-crimson font-bold uppercase tracking-wider">
-              Release v1.02
+            <span className="px-2.5 py-0.5 rounded bg-surface-200 border border-surface-border text-[10px] font-mono text-brand-crimson font-bold uppercase tracking-wider">
+              ARENEX v2.1
             </span>
             <span className="flex items-center gap-1.5 font-mono text-[11px]">
               <span className="w-2 h-2 rounded-full bg-brand-emerald animate-pulse"></span>

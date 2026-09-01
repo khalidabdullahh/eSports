@@ -125,13 +125,19 @@ export default async function PlayerDashboardPage() {
               IGN: <strong className="text-brand-crimson font-bold">{inGameName || "WARRIOR"}</strong> • Free Fire UID:{" "}
               <span className="font-bold text-slate-900 dark:text-gray-200">{freeFireUid || "Not Linked"}</span>
             </p>
-            <div className="flex items-center gap-3 pt-1">
+            <div className="flex flex-wrap items-center gap-2.5 pt-2">
+              <Link
+                href="/profile"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-crimson hover:bg-brand-crimsonDark text-white text-xs font-display font-bold uppercase tracking-wider transition-all shadow-md shadow-brand-crimson/20 hover:shadow-brand-crimson/35 active:scale-[0.98]"
+              >
+                <Settings className="w-3.5 h-3.5" />
+                <span>Edit Profile & Gaming Accounts</span>
+              </Link>
               <Link
                 href="/onboarding"
-                className="inline-flex items-center gap-1 text-[11px] font-mono text-brand-crimson hover:underline font-bold"
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-surface-elevated hover:bg-surface-50 border border-surface-border text-xs font-mono font-bold text-slate-700 dark:text-gray-300 hover:text-slate-950 dark:hover:text-white transition-all shadow-sm"
               >
-                <Settings className="w-3 h-3" />
-                <span>Edit Profile & Gaming Accounts</span>
+                <span>Onboarding Wizard</span>
               </Link>
             </div>
           </div>
