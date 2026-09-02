@@ -22,18 +22,20 @@ export async function Navbar() {
       .from("profiles")
       .select("display_name, avatar_url, role")
       .eq("id", authUser.id)
-      .single();
+      .maybeSingle();
 
     if (profile) {
-      displayName = profile.display_name || "Warrior";
+      displayName = profile.display_name || authUser.email?.split("@")[0] || "Warrior";
       avatarUrl = profile.avatar_url;
-      userRole = profile.role;
+      userRole = profile.role || "USER";
+    } else {
+      displayName = authUser.email?.split("@")[0] || "Warrior";
+      userRole = "USER";
     }
   } else {
-    const currentUser = dataStore.getCurrentUser();
-    displayName = currentUser.role === "SUPER_ADMIN" ? "Khalid Abdullah" : "Dashboard";
-    avatarUrl = currentUser.avatar_url;
-    userRole = currentUser.role;
+    displayName = "Dashboard";
+    avatarUrl = undefined;
+    userRole = "USER";
   }
 
   return (

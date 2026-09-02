@@ -216,4 +216,20 @@ To ensure that the official seed tournaments and the `avatars` storage bucket ar
    - Connected `src/app/admin/finance/ledger/page.tsx`, `src/app/admin/audit/page.tsx`, and `src/app/admin/disputes/page.tsx` to live Supabase tables.
    - Eliminated any in-memory fallback to demo stores. When the database is fresh, the platform is a 100% clean slate, ready for real administrator input, dynamic calculation, and instant payment approval.
 
+---
+
+## 8. September 02, 2026 — ARENEX v2.1.3 Audit (Auth, Dashboard & Server Exception Fix)
+
+### Root Cause of Server-Side Exception (Digest 2706721423):
+When `SEED_PROFILES` was emptied to achieve a 100% clean slate, `dataStore.getCurrentUser()` returned `undefined` when no active session existed.
+1. In `src/components/navbar.tsx`, unauthenticated visitors browsing `/signup` or `/login` triggered a server-side `TypeError: Cannot read properties of undefined (reading 'role')`.
+2. In `src/app/dashboard/page.tsx`, navigating to `/dashboard` triggered a server-side `TypeError: Cannot read properties of undefined (reading 'display_name')`.
+3. In `src/app/notifications/page.tsx`, unauthenticated queries triggered a similar property access crash.
+
+### Solutions Implemented:
+1. **Guaranteed Safe Fallback Profile**: Updated `src/lib/store.ts` `getCurrentUser()` to return an authentic default fallback `Profile` object under all edge conditions so it never returns `undefined`.
+2. **Safe Unauthenticated Navbar Handling**: Refactored `src/components/navbar.tsx` to directly inspect Supabase `authUser` and default unauthenticated state safely without querying uninitialized in-memory stores.
+3. **Protected Dashboard & Notification Routes**: Updated `src/app/dashboard/page.tsx` and `src/app/notifications/page.tsx` to redirect unauthenticated requests directly to `/login` and dynamically fetch profile, registrations, and transactions directly from Supabase.
+
+
 

@@ -76,7 +76,22 @@ class EsportsDataStore {
   }
 
   getCurrentUser(): Profile {
-    return this.profiles.get(this.currentUserId) || SEED_PROFILES[0];
+    const profile = this.profiles.get(this.currentUserId);
+    if (profile) return profile;
+    if (SEED_PROFILES.length > 0) return SEED_PROFILES[0];
+    return {
+      id: "user-visitor",
+      username: "warrior",
+      display_name: "Competitor",
+      avatar_url: "",
+      free_fire_uid: "",
+      in_game_name: "",
+      role: "PLAYER",
+      country: "BD",
+      is_banned: false,
+      created_at: "2026-01-01T00:00:00Z",
+      updated_at: "2026-01-01T00:00:00Z",
+    };
   }
 
   getProfiles(): Profile[] {

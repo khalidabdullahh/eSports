@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { dataStore } from "@/lib/store";
 import { createClient } from "@/lib/supabase/server";
 import { signOutAction } from "@/app/actions/auth-actions";
@@ -29,18 +30,15 @@ export default async function PlayerDashboardPage() {
     data: { user: authUser },
   } = await supabase.auth.getUser();
 
-  const currentUser = dataStore.getCurrentUser();
-  let displayName = currentUser.display_name;
-  let avatarUrl = currentUser.avatar_url;
-  let role = currentUser.role;
-  let inGameName = currentUser.in_game_name;
-  let freeFireUid = currentUser.free_fire_uid;
+  if (!authUser) {
+    redirect("/login?redirect=/dashboard");
+  }
 
-  const isProduction = process.env.NODE_ENV === "production";
-  const isSupabaseConfigured = Boolean(
-    process.env.NEXT_PUBLIC_SUPABASE_URL &&
-    !process.env.NEXT_PUBLIC_SUPABASE_URL.includes("demo")
-  );
+  let displayName = authUser.email?.split("@")[0] || "Competitor";
+  let avatarUrl = "";
+  let role = "USER";
+  let inGameName = "";
+  let freeFireUid = "";
 
   let myRegistrations: any[] = [];
   let myPayments: any[] = [];
@@ -48,56 +46,44 @@ export default async function PlayerDashboardPage() {
   let myPayouts: any[] = [];
   let notifications: any[] = [];
 
-  if (authUser && isSupabaseConfigured) {
-    const [
-      { data: profileRow },
-      { data: gameAccountRow },
-      { data: dbRegs },
-      { data: dbPayments },
-      { data: dbRewards },
-      { data: dbPayouts },
-      { data: dbNotifs },
-    ] = await Promise.all([
-      supabase.from("profiles").select("*").eq("id", authUser.id).maybeSingle(),
-      supabase.from("game_accounts").select("*").eq("user_id", authUser.id).limit(1).maybeSingle(),
-      supabase
-        .from("tournament_registrations")
-        .select("*, tournaments(id, title, mode, scheduled_start_at, status, main_prize_pool_cents, currency)")
-        .eq("user_id", authUser.id)
-        .order("created_at", { ascending: false }),
-      supabase.from("payments").select("*").eq("user_id", authUser.id).order("created_at", { ascending: false }),
-      supabase.from("rewards").select("*").eq("recipient_user_id", authUser.id).order("created_at", { ascending: false }),
-      supabase.from("payouts").select("*").eq("user_id", authUser.id).order("created_at", { ascending: false }),
-      supabase.from("notifications").select("*").eq("user_id", authUser.id).order("created_at", { ascending: false }),
-    ]);
+  const [
+    { data: profileRow },
+    { data: gameAccountRow },
+    { data: dbRegs },
+    { data: dbPayments },
+    { data: dbRewards },
+    { data: dbPayouts },
+    { data: dbNotifs },
+  ] = await Promise.all([
+    supabase.from("profiles").select("*").eq("id", authUser.id).maybeSingle(),
+    supabase.from("game_accounts").select("*").eq("user_id", authUser.id).limit(1).maybeSingle(),
+    supabase
+      .from("tournament_registrations")
+      .select("*, tournaments(id, title, mode, scheduled_start_at, status, main_prize_pool_cents, currency)")
+      .eq("user_id", authUser.id)
+      .order("created_at", { ascending: false }),
+    supabase.from("payments").select("*").eq("user_id", authUser.id).order("created_at", { ascending: false }),
+    supabase.from("rewards").select("*").eq("recipient_user_id", authUser.id).order("created_at", { ascending: false }),
+    supabase.from("payouts").select("*").eq("user_id", authUser.id).order("created_at", { ascending: false }),
+    supabase.from("notifications").select("*").eq("user_id", authUser.id).order("created_at", { ascending: false }),
+  ]);
 
-    if (profileRow) {
-      displayName = profileRow.display_name || authUser.email?.split("@")[0] || "Competitor";
-      avatarUrl = profileRow.avatar_url || "";
-      role = profileRow.role || "USER";
-    }
-
-    if (gameAccountRow) {
-      inGameName = gameAccountRow.in_game_name || "";
-      freeFireUid = gameAccountRow.game_uid || "";
-    } else {
-      inGameName = "";
-      freeFireUid = "";
-    }
-
-    if (dbRegs) myRegistrations = dbRegs;
-    if (dbPayments) myPayments = dbPayments;
-    if (dbRewards) myRewards = dbRewards;
-    if (dbPayouts) myPayouts = dbPayouts;
-    if (dbNotifs) notifications = dbNotifs;
-  } else if (!isProduction) {
-    const registrations = dataStore.getRegistrations();
-    myRegistrations = registrations.filter((r) => r.user_id === currentUser.id);
-    myPayments = dataStore.getPayments().filter((p) => p.user_id === currentUser.id);
-    myRewards = dataStore.getRewards().filter((r) => r.recipient_user_id === currentUser.id);
-    myPayouts = dataStore.getPayouts().filter((p) => p.user_id === currentUser.id);
-    notifications = dataStore.getNotifications(currentUser.id);
+  if (profileRow) {
+    displayName = profileRow.display_name || authUser.email?.split("@")[0] || "Competitor";
+    avatarUrl = profileRow.avatar_url || "";
+    role = profileRow.role || "USER";
   }
+
+  if (gameAccountRow) {
+    inGameName = gameAccountRow.in_game_name || "";
+    freeFireUid = gameAccountRow.game_uid || "";
+  }
+
+  if (dbRegs) myRegistrations = dbRegs;
+  if (dbPayments) myPayments = dbPayments;
+  if (dbRewards) myRewards = dbRewards;
+  if (dbPayouts) myPayouts = dbPayouts;
+  if (dbNotifs) notifications = dbNotifs;
 
   const totalEarningsCents = myRewards.reduce((acc: number, r: any) => acc + (r.amount_cents || 0), 0);
 
@@ -160,7 +146,7 @@ export default async function PlayerDashboardPage() {
           <form action={signOutAction}>
             <button
               type="submit"
-              className="px-3.5 py-1.5 rounded-lg bg-surface-elevated hover:bg-red-500/10 border border-surface-border hover:border-red-500/30 text-slate-700 dark:text-gray-300 hover:text-red-500 text-xs font-mono font-semibold flex items-center gap-1.5 transition-colors shadow-sm"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-surface-elevated hover:bg-red-500/10 hover:text-red-400 border border-surface-border text-xs font-mono text-slate-600 dark:text-gray-400 transition-colors"
             >
               <LogOut className="w-3.5 h-3.5" />
               <span>Sign Out</span>
@@ -169,81 +155,72 @@ export default async function PlayerDashboardPage() {
         </div>
       </div>
 
-      {/* Lifecycle Stepper / Active Tournament Status */}
-      {myRegistrations.length > 0 && (() => {
-        const latestReg = myRegistrations[0];
-        const latestTour = latestReg.tournaments || (!latestReg.tournaments ? dataStore.getTournament(latestReg.tournament_id) : null);
-        const tourTitle = latestTour?.title || "Active Tournament";
-        const isPaid = latestReg.status === "APPROVED" || latestReg.status === "CHECKED_IN";
-        const isCheckedIn = latestReg.status === "CHECKED_IN";
-        const isLive = latestTour?.status === "LIVE";
-
-        return (
-          <div className="rounded-2xl bg-surface-100 border border-surface-border p-6 space-y-4 shadow-xl">
-            <div className="flex items-center justify-between pb-3 border-b border-surface-border">
-              <h2 className="font-display text-lg font-black text-slate-900 dark:text-white uppercase tracking-wider">
-                Active Tournament Lifecycle Progression
-              </h2>
-              <span className="text-xs font-mono text-brand-crimson font-bold">{tourTitle}</span>
-            </div>
-
-            {/* 6-Step Dynamic Progression Bar */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 pt-2 text-center text-xs font-mono">
-              <div className="p-3 rounded-lg bg-surface-200 border border-emerald-500/30 text-brand-emerald space-y-1">
-                <span className="text-base block font-bold">✓</span>
-                <span className="font-bold block">1. Registration</span>
-                <span className="text-[10px] text-slate-500 dark:text-gray-400 block">Slot #{latestReg.slot_number || 1} Confirmed</span>
-              </div>
-
-              <div className={`p-3 rounded-lg bg-surface-200 border ${isPaid ? "border-emerald-500/30 text-brand-emerald" : "border-amber-500/30 text-amber-500"} space-y-1`}>
-                <span className="text-base block font-bold">{isPaid ? "✓" : "⏳"}</span>
-                <span className="font-bold block">2. Payment</span>
-                <span className="text-[10px] text-slate-500 dark:text-gray-400 block">{isPaid ? "Verified" : "Verification"}</span>
-              </div>
-
-              <div className={`p-3 rounded-lg bg-surface-200 border ${isCheckedIn ? "border-emerald-500/30 text-brand-emerald" : "border-surface-border text-slate-500 dark:text-gray-400"} space-y-1`}>
-                <span className="text-base block font-bold">{isCheckedIn ? "✓" : "3"}</span>
-                <span className="font-bold block">3. Check-In</span>
-                <span className="text-[10px] text-slate-500 dark:text-gray-400 block">{isCheckedIn ? "Checked In" : "Pending Room"}</span>
-              </div>
-
-              <div className={`p-3 rounded-lg bg-surface-200 border ${isPaid ? "border-brand-crimson/40 text-brand-crimson" : "border-surface-border text-slate-500 dark:text-gray-400"} space-y-1`}>
-                <Unlock className={`w-4 h-4 mx-auto ${isPaid ? "text-brand-crimson" : "text-gray-400"}`} />
-                <span className="font-bold block">4. Room Key</span>
-                <span className="text-[10px] text-slate-500 dark:text-gray-400 block">{isPaid ? "Unlocked" : "Locked"}</span>
-              </div>
-
-              <div className={`p-3 rounded-lg bg-surface-200 border ${isLive ? "border-emerald-500/40 text-brand-emerald" : "border-surface-border text-slate-500 dark:text-gray-400"} space-y-1`}>
-                <Radio className="w-4 h-4 mx-auto" />
-                <span className="font-bold block">5. Live Match</span>
-                <span className="text-[10px] block">{isLive ? "Match Underway" : "Scheduled"}</span>
-              </div>
-
-              <div className="p-3 rounded-lg bg-surface-200 border border-surface-border text-slate-500 dark:text-gray-400 space-y-1">
-                <Trophy className="w-4 h-4 mx-auto" />
-                <span className="font-bold block">6. Payout</span>
-                <span className="text-[10px] block">Prize Pool</span>
-              </div>
-            </div>
+      {/* Metrics Row */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="p-5 rounded-2xl bg-surface-100 border border-surface-border space-y-1">
+          <div className="flex items-center justify-between text-slate-500 dark:text-gray-400 text-xs font-mono">
+            <span>Tournaments Joined</span>
+            <Trophy className="w-4 h-4 text-brand-crimson" />
           </div>
-        );
-      })()}
+          <div className="text-2xl font-black font-display text-slate-900 dark:text-white">
+            {myRegistrations.length}
+          </div>
+        </div>
 
-      {/* Grid: My Registrations & Financial History */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left 2 Cols: My Tournaments */}
+        <div className="p-5 rounded-2xl bg-surface-100 border border-surface-border space-y-1">
+          <div className="flex items-center justify-between text-slate-500 dark:text-gray-400 text-xs font-mono">
+            <span>Confirmed Tickets</span>
+            <CheckCircle2 className="w-4 h-4 text-brand-emerald" />
+          </div>
+          <div className="text-2xl font-black font-display text-slate-900 dark:text-white">
+            {
+              myRegistrations.filter(
+                (r) => r.status === "APPROVED" || r.status === "CHECKED_IN"
+              ).length
+            }
+          </div>
+        </div>
+
+        <div className="p-5 rounded-2xl bg-surface-100 border border-surface-border space-y-1">
+          <div className="flex items-center justify-between text-slate-500 dark:text-gray-400 text-xs font-mono">
+            <span>Total Payments</span>
+            <DollarSign className="w-4 h-4 text-cyan-400" />
+          </div>
+          <div className="text-2xl font-black font-display text-slate-900 dark:text-white">
+            {myPayments.length}
+          </div>
+        </div>
+
+        <div className="p-5 rounded-2xl bg-surface-100 border border-surface-border space-y-1">
+          <div className="flex items-center justify-between text-slate-500 dark:text-gray-400 text-xs font-mono">
+            <span>Account Security</span>
+            <Shield className="w-4 h-4 text-brand-gold" />
+          </div>
+          <div className="text-sm font-bold text-brand-emerald font-mono pt-1">
+            PROTECTED
+          </div>
+        </div>
+      </div>
+
+      {/* Main Grid: Registrations vs Alerts & Vault */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Left 2 Cols: My Tournament Registrations & Live Room Gates */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="p-6 rounded-2xl bg-surface-100 border border-surface-border space-y-4 shadow-xl">
-            <div className="flex items-center justify-between">
-              <h3 className="font-display text-base font-bold text-slate-900 dark:text-white uppercase tracking-wide">
-                My Active Tournaments & Match Keys
-              </h3>
+          <div className="rounded-2xl bg-surface-100 border border-surface-border p-6 space-y-5">
+            <div className="flex items-center justify-between pb-3 border-b border-surface-border">
+              <div>
+                <h3 className="font-display text-lg font-bold text-slate-900 dark:text-white uppercase tracking-tight">
+                  My Tournament Registrations
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-gray-400 font-sans">
+                  Active entries, check-in windows, and room credentials
+                </p>
+              </div>
               <Link
                 href="/tournaments"
-                className="text-xs font-mono text-brand-crimson hover:underline flex items-center gap-1 font-bold"
+                className="text-xs font-mono text-brand-crimson hover:underline"
               >
-                <span>Browse Tournaments</span>
-                <ArrowRight className="w-3.5 h-3.5" />
+                Browse All Cups →
               </Link>
             </div>
 
@@ -318,28 +295,36 @@ export default async function PlayerDashboardPage() {
                       <div className="flex items-center justify-between pt-2 border-t border-surface-border/60 text-xs font-mono">
                         <div className="flex items-center gap-4 text-slate-600 dark:text-gray-400">
                           <span>
-                            Guaranteed Pool:{" "}
-                            <strong className="text-brand-gold font-bold">
+                            Prize Pool:{" "}
+                            <strong className="text-slate-900 dark:text-gray-200 font-bold">
                               {formatCurrency(tourPool, tourCurrency)}
                             </strong>
                           </span>
                         </div>
 
                         <div className="flex items-center gap-2">
-                          {isPaid && (
+                          {isPaid ? (
                             <Link
                               href={`/tournaments/${tourId}/room`}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-elevated hover:bg-surface-50 border border-surface-border text-slate-900 dark:text-gray-200 hover:text-brand-crimson font-mono text-xs font-bold transition-all shadow-sm"
+                              className="px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5 font-bold uppercase transition-colors text-[11px]"
                             >
-                              <Lock className="w-3.5 h-3.5 text-brand-crimson" />
-                              <span>Room Access</span>
+                              <Unlock className="w-3 h-3" />
+                              <span>Room Gate</span>
+                            </Link>
+                          ) : (
+                            <Link
+                              href={`/tournaments/${tourId}/register`}
+                              className="px-3 py-1.5 rounded-lg bg-brand-crimson hover:bg-brand-crimsonDark text-white flex items-center gap-1 font-bold uppercase transition-all text-[11px] shadow-sm"
+                            >
+                              <Lock className="w-3 h-3" />
+                              <span>Submit Payment</span>
                             </Link>
                           )}
                           <Link
                             href={`/tournaments/${tourId}`}
-                            className="text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+                            className="px-3 py-1.5 rounded-lg bg-surface-elevated hover:bg-surface-50 border border-surface-border text-slate-700 dark:text-gray-300 font-bold uppercase transition-colors text-[11px]"
                           >
-                            Details →
+                            Details
                           </Link>
                         </div>
                       </div>
@@ -350,96 +335,107 @@ export default async function PlayerDashboardPage() {
             </div>
           </div>
 
-          {/* Dispute Center */}
-          <div className="p-6 rounded-2xl bg-surface-100 border border-surface-border space-y-4 shadow-xl">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Shield className="w-4 h-4 text-brand-crimson" />
-                <h3 className="font-display text-base font-bold text-slate-900 dark:text-white uppercase tracking-wide">
-                  Match Dispute & Fair Play Desk
-                </h3>
+          {/* Payment History Stream */}
+          <div className="rounded-2xl bg-surface-100 border border-surface-border p-6 space-y-4">
+            <h3 className="font-display text-lg font-bold text-slate-900 dark:text-white uppercase tracking-tight">
+              bKash / Nagad Transaction Submissions
+            </h3>
+
+            {myPayments.length === 0 ? (
+              <p className="text-xs text-slate-500 dark:text-gray-500 font-mono py-4 text-center">
+                No payment transactions recorded for your account.
+              </p>
+            ) : (
+              <div className="divide-y divide-surface-border/60">
+                {myPayments.map((p) => (
+                  <div
+                    key={p.id}
+                    className="py-3 flex items-center justify-between text-xs font-mono"
+                  >
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-slate-900 dark:text-white uppercase text-cyan-600 dark:text-cyan-400">
+                          {p.payment_method}
+                        </span>
+                        <span className="text-slate-600 dark:text-gray-300 font-bold">{p.transaction_id}</span>
+                      </div>
+                      <span className="text-[10px] text-slate-500 dark:text-gray-500">
+                        {formatDateTime(p.created_at || p.submitted_at)}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <span className="font-bold text-slate-900 dark:text-white">
+                        {formatCurrency(p.amount_cents, p.currency || "BDT")}
+                      </span>
+                      <span
+                        className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                          p.status === "VERIFIED"
+                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30"
+                            : p.status === "REJECTED"
+                            ? "bg-red-500/10 text-red-400 border border-red-500/30"
+                            : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30"
+                        }`}
+                      >
+                        {p.status}
+                      </span>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <Link
-                href="/disputes"
-                className="text-xs font-mono text-brand-crimson hover:underline font-bold"
-              >
-                Submit Evidence
-              </Link>
-            </div>
-            <p className="text-xs text-slate-600 dark:text-gray-400 font-sans">
-              Have a score discrepancy, wrong placement, or fair play report? Submit screenshot proof for referee review.
-            </p>
+            )}
           </div>
         </div>
 
-        {/* Right Col: Payments & Notifications */}
+        {/* Right Col: Notifications & Quick Profile Setup */}
         <div className="space-y-6">
-          {/* Recent Payments */}
-          <div className="p-6 rounded-2xl bg-surface-100 border border-surface-border space-y-4 shadow-xl">
-            <h3 className="font-display text-base font-bold text-slate-900 dark:text-white uppercase tracking-wide">
-              Payment Submissions
-            </h3>
-
-            <div className="space-y-2.5">
-              {myPayments.map((p) => (
-                <div
-                  key={p.id}
-                  className="p-3 rounded-xl bg-surface-200 border border-surface-border text-xs font-mono space-y-1"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-slate-900 dark:text-white">
-                      {formatCurrency(p.amount_cents, p.currency)}
-                    </span>
-                    <span
-                      className={`text-[10px] font-bold uppercase ${
-                        p.status === "VERIFIED"
-                          ? "text-brand-emerald"
-                          : p.status === "SUBMITTED"
-                          ? "text-amber-500"
-                          : "text-red-500"
-                      }`}
-                    >
-                      {p.status}
-                    </span>
-                  </div>
-                  <div className="text-[10px] text-slate-500 dark:text-gray-400 flex justify-between">
-                    <span>{p.payment_method.toUpperCase()}</span>
-                    <span>TRX: {p.transaction_id.slice(0, 10)}...</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* In-App Notifications */}
-          <div className="p-6 rounded-2xl bg-surface-100 border border-surface-border space-y-4 shadow-xl">
-            <div className="flex items-center justify-between">
+          {/* Notifications */}
+          <div className="rounded-2xl bg-surface-100 border border-surface-border p-6 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-surface-border">
               <div className="flex items-center gap-2">
-                <Bell className="w-4 h-4 text-brand-gold" />
-                <h3 className="font-display text-base font-bold text-slate-900 dark:text-white uppercase tracking-wide">
-                  Notifications
+                <Bell className="w-4 h-4 text-cyan-400" />
+                <h3 className="font-display text-base font-bold text-slate-900 dark:text-white uppercase">
+                  Alerts & Updates
                 </h3>
               </div>
-              <span className="text-[10px] font-mono text-slate-500 dark:text-gray-400">
-                {notifications.filter((n) => !n.is_read).length} unread
-              </span>
+              <Badge variant="surface">{notifications.length}</Badge>
             </div>
 
-            <div className="space-y-2">
-              {notifications.map((n) => (
-                <div
-                  key={n.id}
-                  className={`p-3 rounded-xl border text-xs space-y-0.5 ${
-                    n.is_read
-                      ? "bg-surface-200/60 border-surface-border text-slate-600 dark:text-gray-400"
-                      : "bg-surface-200 border-brand-crimson/40 text-slate-900 dark:text-gray-200 font-medium"
-                  }`}
-                >
-                  <span className="font-display font-bold block">{n.title}</span>
-                  <p className="text-[11px] leading-relaxed">{n.message}</p>
-                </div>
-              ))}
-            </div>
+            {notifications.length === 0 ? (
+              <p className="text-xs text-slate-500 dark:text-gray-500 font-mono py-4 text-center">
+                You are all caught up! No unread notifications.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {notifications.map((n) => (
+                  <div
+                    key={n.id}
+                    className="p-3.5 rounded-xl bg-surface-200 border border-surface-border space-y-1 text-xs"
+                  >
+                    <div className="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+                      <span>{n.title}</span>
+                      <span className="text-[10px] text-slate-500 dark:text-gray-500 font-mono">
+                        {formatDateTime(n.created_at)}
+                      </span>
+                    </div>
+                    <p className="text-slate-600 dark:text-gray-400 leading-relaxed font-sans">{n.message}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Quick Help & Fair Play */}
+          <div className="rounded-2xl bg-surface-100 border border-surface-border p-6 space-y-3">
+            <h4 className="font-display text-sm font-bold text-slate-900 dark:text-white uppercase">
+              Free Fire Room Guidelines
+            </h4>
+            <ul className="text-xs text-slate-600 dark:text-gray-400 space-y-2 list-disc list-inside font-sans">
+              <li>Room ID & Password release 30 minutes before match start.</li>
+              <li>Always check in before the 15-minute check-in deadline.</li>
+              <li>Only registered Free Fire UIDs are permitted inside the lobby.</li>
+              <li>Spectators or unverified participants will be kicked immediately.</li>
+            </ul>
           </div>
         </div>
       </div>
