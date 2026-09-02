@@ -24,10 +24,6 @@ export default function HomePage() {
   const tournaments = dataStore.getTournaments();
   const liveTournament = tournaments.find((t) => t.status === "LIVE") || tournaments[0];
   const upcomingTournaments = tournaments.filter((t) => t.id !== liveTournament?.id);
-  const match = dataStore.getMatch("match-night-battle-round-1");
-  const matchParticipants = match?.participants || [];
-
-  const topPlayers = [...matchParticipants].sort((a, b) => b.total_score - a.total_score);
 
   return (
     <div className="flex flex-col gap-12 sm:gap-20 pb-16">
@@ -371,84 +367,42 @@ export default function HomePage() {
                 <Badge variant="live" pulse>
                   ARENA TELEMETRY
                 </Badge>
-                <span className="text-xs font-mono text-gray-400">Round 1 • 3 Players Alive</span>
+                <span className="text-xs font-mono text-gray-400">Server-Authoritative Match Engine</span>
               </div>
-              <h3 className="font-display text-2xl font-black text-white uppercase">
-                Night Battle — Solo Cup Leaderboard
+              <h3 className="font-display text-2xl font-black text-slate-900 dark:text-white uppercase">
+                {liveTournament ? liveTournament.title : "ARENEX Official Esports Circuit"}
               </h3>
             </div>
-            <Link
-              href="/live"
-              className="px-4 py-2 rounded-lg bg-brand-crimson hover:bg-brand-crimsonDark text-white font-display font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-md shadow-brand-crimson/20"
-            >
-              <Radio className="w-3.5 h-3.5 text-white" />
-              Full Broadcast Room
-            </Link>
+            <div className="flex items-center gap-3">
+              <Link
+                href="/live"
+                className="px-4 py-2 rounded-lg bg-brand-crimson hover:bg-brand-crimsonDark text-white font-display font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-md shadow-brand-crimson/20"
+              >
+                <Radio className="w-3.5 h-3.5 text-white" />
+                <span>Full Broadcast Room</span>
+              </Link>
+            </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs font-mono">
-              <thead>
-                <tr className="text-gray-400 border-b border-surface-border pb-2">
-                  <th className="pb-3 px-3">#</th>
-                  <th className="pb-3 px-3">Warrior</th>
-                  <th className="pb-3 px-3">Status</th>
-                  <th className="pb-3 px-3 text-center">Kills</th>
-                  <th className="pb-3 px-3 text-center">Placement</th>
-                  <th className="pb-3 px-3 text-right">Total Score</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-surface-border/60">
-                {topPlayers.slice(0, 5).map((p, idx) => (
-                  <tr
-                    key={p.id}
-                    className="hover:bg-surface-elevated/50 transition-colors"
-                  >
-                    <td className="py-3 px-3 font-bold text-gray-300">
-                      {idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `#${idx + 1}`}
-                    </td>
-                    <td className="py-3 px-3">
-                      <div className="flex items-center gap-2.5">
-                        <img
-                          src={p.avatar_url}
-                          alt={p.participant_name}
-                          className="w-7 h-7 rounded-full object-cover ring-1 ring-surface-border"
-                        />
-                        <div>
-                          <span className="font-sans font-bold text-white block">
-                            {p.participant_name}
-                          </span>
-                          <span className="text-[10px] text-gray-500">
-                            UID: {p.free_fire_uid}
-                          </span>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-3 px-3">
-                      {p.is_alive ? (
-                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-semibold bg-brand-emerald/10 text-brand-emerald border border-brand-emerald/30">
-                          <span className="w-1.5 h-1.5 rounded-full bg-brand-emerald animate-pulse" />
-                          IN COMBAT
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-surface-200 text-gray-400">
-                          ELIMINATED ({p.placement ? `#${p.placement}` : ""})
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-3 px-3 text-center font-bold text-brand-crimson text-sm">
-                      {p.kills}
-                    </td>
-                    <td className="py-3 px-3 text-center text-gray-300">
-                      {p.placement_points}
-                    </td>
-                    <td className="py-3 px-3 text-right font-black text-brand-gold text-base">
-                      {p.total_score}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="p-8 rounded-xl bg-surface-200/80 border border-surface-border text-center space-y-3">
+            <div className="w-12 h-12 rounded-xl bg-brand-crimson/10 text-brand-crimson border border-brand-crimson/20 flex items-center justify-center mx-auto shadow-sm">
+              <Radio className="w-6 h-6 animate-pulse" />
+            </div>
+            <h4 className="font-display font-bold text-base text-slate-900 dark:text-white uppercase">
+              Live Referee Telemetry & Verified Leaderboards
+            </h4>
+            <p className="text-xs text-slate-600 dark:text-gray-400 font-sans max-w-md mx-auto">
+              Match kills, survival placements, and official podium distributions are calculated deterministically as live games conclude.
+            </p>
+            <div className="pt-2">
+              <Link
+                href="/tournaments"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-surface-elevated hover:bg-surface-50 border border-surface-border text-xs font-mono font-bold text-slate-800 dark:text-gray-200 transition-all"
+              >
+                <span>View All Active Tournaments</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
           </div>
         </div>
       </section>

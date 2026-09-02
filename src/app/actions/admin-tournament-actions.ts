@@ -440,3 +440,80 @@ export async function updateRoomCredentialsAction(
   }
 }
 
+/**
+ * Super Admin action: Deletes or cancels a tournament
+ */
+export async function deleteTournamentAction(tournamentId: string) {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user: authUser },
+    } = await supabase.auth.getUser();
+
+    if (authUser && isSupabaseConfigured) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", authUser.id)
+        .single();
+
+      const isStaff =
+        profile?.role === "SUPER_ADMIN" ||
+        profile?.role === "OWNER" ||
+        profile?.role === "TOURNAMENT_ADMIN";
+
+      if (!isStaff) {
+        return { success: false, error: "Unauthorized: Administrator privileges required to delete tournament." };
+      }
+
+      // Check if tournament exists
+      const { data: tour } = await supabase
+        .from("tournaments")
+        .select("id, title, status")
+        .eq("id", tournamentId)
+        .single();
+
+      if (!tour) {
+        return { success: false, error: "Tournament not found." };
+      }
+
+      // Delete tournament (foreign key CASCADE removes rules, room_credentials, registrations)
+      const { error: delErr } = await supabase
+        .from("tournaments")
+        .delete()
+        .eq("id", tournamentId);
+
+      if (delErr) {
+        return { success: false, error: delErr.message };
+      }
+
+      await supabase.from("audit_logs").insert({
+        actor_id: authUser.id,
+        action: "DELETE_TOURNAMENT",
+        target_type: "TOURNAMENT",
+        target_id: tournamentId,
+        details: { title: tour.title, status: tour.status },
+      });
+
+      revalidatePath("/tournaments");
+      revalidatePath("/admin/tournaments");
+      revalidatePath("/admin");
+      return { success: true };
+    }
+
+    if (!isProduction && !isSupabaseConfigured) {
+      // In local store, remove tournament
+      const all = dataStore.getTournaments().filter((t) => t.id !== tournamentId);
+      revalidatePath("/tournaments");
+      revalidatePath("/admin/tournaments");
+      revalidatePath("/admin");
+      return { success: true };
+    }
+
+    return { success: false, error: "Database configuration error." };
+  } catch (err: unknown) {
+    return { success: false, error: (err as Error).message || "Failed to delete tournament." };
+  }
+}
+
+

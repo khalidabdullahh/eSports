@@ -29,6 +29,7 @@ import {
   Sparkles,
   ExternalLink,
   MessageSquare,
+  Trash2,
 } from "lucide-react";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -36,6 +37,7 @@ import {
   updateTournamentStatusAction,
   updateTournamentStreamAction,
   updateRoomCredentialsAction,
+  deleteTournamentAction,
 } from "@/app/actions/admin-tournament-actions";
 import {
   verifyPaymentAction,
@@ -76,9 +78,7 @@ export function AdminConsoleClient({
 
   const [tournaments, setTournaments] = useState(initialTournaments);
   const [payments, setPayments] = useState(initialPayments);
-  const [selectedTourId, setSelectedTourId] = useState<string>(
-    initialTournaments[0]?.id || ""
-  );
+  const [selectedTourId, setSelectedTourId] = useState<string>("");
 
   const [paymentFilter, setPaymentFilter] = useState<"ALL" | "SUBMITTED" | "VERIFIED" | "REJECTED">("ALL");
   const [paymentSearch, setPaymentSearch] = useState("");
@@ -178,6 +178,24 @@ export function AdminConsoleClient({
         router.refresh();
       } else {
         showNotification("error", res.error || "Illegal state transition");
+      }
+    });
+  };
+
+  const handleDeleteTournament = (tourId: string, title: string) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to permanently delete tournament "${title}"?\n\nThis will remove the tournament, rules, and room credentials. This action cannot be undone.`
+    );
+    if (!confirmed) return;
+
+    startTransition(async () => {
+      const res = await deleteTournamentAction(tourId);
+      if (res.success) {
+        setTournaments((prev) => prev.filter((t) => t.id !== tourId));
+        showNotification("success", `Tournament "${title}" has been permanently deleted.`);
+        router.refresh();
+      } else {
+        showNotification("error", res.error || "Failed to delete tournament");
       }
     });
   };
@@ -473,9 +491,9 @@ export function AdminConsoleClient({
             {tournaments.map((t) => (
               <div
                 key={t.id}
-                className="p-6 rounded-2xl bg-surface-100 border border-surface-border flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 shadow-md"
+                className="p-5 sm:p-6 rounded-2xl bg-surface-100 border border-surface-border flex flex-col xl:flex-row items-start xl:items-center justify-between gap-5 shadow-md"
               >
-                <div className="space-y-2">
+                <div className="space-y-2 w-full">
                   <div className="flex items-center gap-2.5 flex-wrap">
                     <h3 className="font-display text-lg font-bold text-white uppercase">
                       {t.title}
@@ -517,12 +535,13 @@ export function AdminConsoleClient({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 flex-wrap shrink-0">
+                {/* Mobile & Desktop Action Toolbar */}
+                <div className="flex flex-wrap items-center gap-2 w-full xl:w-auto pt-3 xl:pt-0 border-t xl:border-t-0 border-surface-border/60">
                   {t.status === "DRAFT" && (
                     <button
                       onClick={() => handleStatusChange(t.id, "PUBLISHED")}
                       disabled={isPending}
-                      className="px-3 py-1.5 rounded-lg bg-emerald-500 text-black font-display font-bold text-xs uppercase hover:bg-emerald-400 transition-colors"
+                      className="px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-display font-bold text-xs uppercase transition-colors"
                     >
                       Publish
                     </button>
@@ -532,7 +551,7 @@ export function AdminConsoleClient({
                     <button
                       onClick={() => handleStatusChange(t.id, "REGISTRATION_OPEN")}
                       disabled={isPending}
-                      className="px-3 py-1.5 rounded-lg bg-emerald-500 text-black font-display font-bold text-xs uppercase hover:bg-emerald-400 transition-colors"
+                      className="px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-display font-bold text-xs uppercase transition-colors"
                     >
                       Open Registration
                     </button>
@@ -542,7 +561,7 @@ export function AdminConsoleClient({
                     <button
                       onClick={() => handleStatusChange(t.id, "REGISTRATION_CLOSED")}
                       disabled={isPending}
-                      className="px-3 py-1.5 rounded-lg bg-amber-500 text-black font-display font-bold text-xs uppercase hover:bg-amber-400 transition-colors"
+                      className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-display font-bold text-xs uppercase transition-colors"
                     >
                       Close Registration
                     </button>
@@ -552,7 +571,7 @@ export function AdminConsoleClient({
                     <button
                       onClick={() => handleStatusChange(t.id, "CHECK_IN")}
                       disabled={isPending}
-                      className="px-3 py-1.5 rounded-lg bg-cyan-500 text-black font-display font-bold text-xs uppercase hover:bg-cyan-400 transition-colors"
+                      className="px-3.5 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-black font-display font-bold text-xs uppercase transition-colors"
                     >
                       Open Check-In
                     </button>
@@ -562,7 +581,7 @@ export function AdminConsoleClient({
                     <button
                       onClick={() => handleStatusChange(t.id, "LIVE")}
                       disabled={isPending}
-                      className="px-3 py-1.5 rounded-lg bg-brand-crimson text-white font-display font-bold text-xs uppercase hover:bg-brand-crimsonDark transition-colors shadow-md shadow-brand-crimson/25"
+                      className="px-3.5 py-2 rounded-xl bg-brand-crimson text-white font-display font-bold text-xs uppercase hover:bg-brand-crimsonDark transition-colors shadow-md shadow-brand-crimson/25"
                     >
                       Launch Live Match
                     </button>
@@ -571,7 +590,7 @@ export function AdminConsoleClient({
                   {t.status === "LIVE" && (
                     <Link
                       href={`/admin/referee/match-night-battle-round-1`}
-                      className="px-3 py-1.5 rounded-lg bg-brand-crimson text-white font-display font-bold text-xs uppercase hover:bg-brand-crimsonDark transition-colors flex items-center gap-1"
+                      className="px-3.5 py-2 rounded-xl bg-brand-crimson text-white font-display font-bold text-xs uppercase hover:bg-brand-crimsonDark transition-colors flex items-center gap-1 shadow-md shadow-brand-crimson/25"
                     >
                       <UploadCloud className="w-3.5 h-3.5" />
                       <span>Input Stats</span>
@@ -580,10 +599,21 @@ export function AdminConsoleClient({
 
                   <Link
                     href={`/tournaments/${t.id}`}
-                    className="px-3 py-1.5 rounded-lg bg-surface-elevated hover:bg-surface-50 border border-surface-border text-xs font-mono font-bold text-gray-300 hover:text-white transition-colors"
+                    className="px-3.5 py-2 rounded-xl bg-surface-elevated hover:bg-surface-50 border border-surface-border text-xs font-mono font-bold text-gray-300 hover:text-white transition-colors"
                   >
                     View Public
                   </Link>
+
+                  {/* Delete Tournament Action */}
+                  <button
+                    onClick={() => handleDeleteTournament(t.id, t.title)}
+                    disabled={isPending}
+                    className="px-3 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 text-xs font-mono font-bold uppercase transition-colors flex items-center gap-1"
+                    title="Delete Tournament"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Delete</span>
+                  </button>
                 </div>
               </div>
             ))}

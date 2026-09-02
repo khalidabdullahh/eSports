@@ -174,3 +174,29 @@ To ensure that the official seed tournaments and the `avatars` storage bucket ar
 1. Open your **Supabase Dashboard** -> **SQL Editor**.
 2. Copy and paste the complete contents of `supabase/migrations/20260831000002_v2_seed_tournaments_and_participants.sql`.
 3. Click **Run**. The script is 100% idempotent and safe to re-run anytime.
+
+---
+
+## 6. September 02, 2026 — ARENEX v2.1.1 Audit (Admin Mobile, Clean Data Slate, Authentic bKash UI & TrxID Verification)
+
+### Key Problems Resolved:
+
+1. **Admin Desk Mobile Responsiveness & Delete Option**:
+   - Added responsive wrapping and touch-friendly action grids across all screen widths in `src/app/admin/admin-console-client.tsx` and `src/app/admin/tournaments/admin-tournaments-client.tsx`.
+   - Created `deleteTournamentAction` in `src/app/actions/admin-tournament-actions.ts` allowing Super Admins to permanently remove or cancel draft tournaments.
+   - Fixed mobile form submit layout in `src/app/admin/tournaments/new/page.tsx`.
+
+2. **Clean Slate & Removal of Seed Mock Players**:
+   - Updated `src/app/rankings/page.tsx` to query live Supabase match records and participants.
+   - Cleaned out all fake players (`ALPHA〆KILLER`, `SHADOW-NINJA`, `PRO-SNIPER`) when no matches have concluded, displaying a clean season initializing state.
+   - Cleaned out hardcoded mock match references from `src/app/page.tsx`.
+
+3. **Authentic bKash Merchant Payment UI**:
+   - Removed `"bKash Merchant Payment"` and `"Manual Merchant Confirmation Portal"` text labels.
+   - Redesigned `/tournaments/[id]/register` payment step into the authentic bKash checkout style with signature bKash pink `#E2136E` top accent bar, recipient number `01643526721`, 1-click copy badge, clear reference/amount box, and authentic pink submit button.
+
+4. **TrxID Payment Submission & Admin Queue Visibility**:
+   - Updated `submitPaymentAction` in `src/app/actions/tournament-actions.ts` to automatically query and guarantee a valid `registration_id` UUID from Supabase.
+   - Added `revalidatePath("/admin")` so submitted payments immediately appear on the Super Admin Desk.
+   - Changed default tournament filter in the admin payment center to `"All Tournaments"`, preventing payments from being filtered out.
+

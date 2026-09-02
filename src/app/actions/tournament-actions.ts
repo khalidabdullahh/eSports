@@ -176,7 +176,7 @@ export async function submitPaymentAction(
       // Authoritatively fetch entry fee and currency from database
       const { data: tourRow, error: tourError } = await supabase
         .from("tournaments")
-        .select("entry_fee_cents, currency")
+        .select("id, entry_fee_cents, currency, current_participants_count")
         .eq("id", tournamentId)
         .single();
 
@@ -184,11 +184,50 @@ export async function submitPaymentAction(
         return { success: false, error: "Tournament record not found." };
       }
 
+      // Ensure registration exists and get authoritative registration UUID
+      let effectiveRegId = registrationId;
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(registrationId);
+
+      const { data: existingReg } = await supabase
+        .from("tournament_registrations")
+        .select("id")
+        .eq("tournament_id", tournamentId)
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (existingReg) {
+        effectiveRegId = existingReg.id;
+      } else if (!isUUID) {
+        // Create registration record
+        const nextSlot = (tourRow.current_participants_count || 0) + 1;
+        const { data: newReg, error: regErr } = await supabase
+          .from("tournament_registrations")
+          .insert({
+            tournament_id: tournamentId,
+            user_id: userId,
+            slot_number: nextSlot,
+            status: "PENDING_PAYMENT",
+          })
+          .select("id")
+          .single();
+
+        if (regErr || !newReg) {
+          return { success: false, error: regErr?.message || "Failed to create tournament registration." };
+        }
+        effectiveRegId = newReg.id;
+
+        // Update participant count
+        await supabase
+          .from("tournaments")
+          .update({ current_participants_count: nextSlot })
+          .eq("id", tournamentId);
+      }
+
       const { data: paymentRow, error: paymentError } = await supabase
         .from("payments")
         .insert({
           tournament_id: tournamentId,
-          registration_id: registrationId,
+          registration_id: effectiveRegId,
           user_id: userId,
           amount_cents: tourRow.entry_fee_cents,
           currency: tourRow.currency,
@@ -211,10 +250,13 @@ export async function submitPaymentAction(
       await supabase
         .from("tournament_registrations")
         .update({ status: "PAYMENT_SUBMITTED", updated_at: new Date().toISOString() })
-        .eq("id", registrationId);
+        .eq("id", effectiveRegId);
 
       revalidatePath(`/tournaments/${tournamentId}`);
+      revalidatePath(`/tournaments/${tournamentId}/register`);
+      revalidatePath(`/tournaments/${tournamentId}/room`);
       revalidatePath("/dashboard");
+      revalidatePath("/admin");
       revalidatePath("/admin/finance/payments");
       return { success: true, payment: paymentRow };
     }

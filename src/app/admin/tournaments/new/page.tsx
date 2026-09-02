@@ -338,17 +338,17 @@ export default function AdminNewTournamentPage() {
         </div>
 
         {/* Submit Actions */}
-        <div className="flex items-center justify-end gap-3 pt-2">
+        <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-3 pt-4 border-t border-surface-border">
           <Link
             href="/admin"
-            className="px-5 py-3 rounded-xl bg-surface-elevated hover:bg-surface-50 border border-surface-border text-slate-700 dark:text-gray-300 font-display font-semibold text-xs uppercase tracking-wider transition-all"
+            className="w-full sm:w-auto px-5 py-3 rounded-xl bg-surface-elevated hover:bg-surface-50 border border-surface-border text-slate-700 dark:text-gray-300 font-display font-semibold text-xs uppercase tracking-wider text-center transition-all shadow-sm"
           >
             Cancel
           </Link>
           <button
             type="submit"
             disabled={isPending}
-            className="px-6 py-3 rounded-xl bg-brand-crimson hover:bg-brand-crimsonDark text-white font-display font-bold text-xs uppercase tracking-wider flex items-center gap-2 transition-all shadow-lg shadow-brand-crimson/25 active:scale-[0.98] disabled:opacity-50"
+            className="w-full sm:w-auto px-6 py-3 rounded-xl bg-brand-crimson hover:bg-brand-crimsonDark text-white font-display font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg shadow-brand-crimson/25 active:scale-[0.98] disabled:opacity-50"
           >
             <span>{isPending ? "Generating Tournament..." : "Create Tournament (Draft)"}</span>
             <CheckCircle2 className="w-4 h-4" />

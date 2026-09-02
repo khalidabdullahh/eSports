@@ -89,15 +89,21 @@ export default function TournamentRegisterPage() {
         });
       }
 
-      // 2. Fetch User & Game Account
+      // 2. Fetch User, Game Account, and Existing Registration
       const {
         data: { user },
       } = await supabase.auth.getUser();
 
       if (user) {
-        const [profRes, gameRes] = await Promise.all([
+        const [profRes, gameRes, regRes] = await Promise.all([
           supabase.from("profiles").select("display_name").eq("id", user.id).maybeSingle(),
           supabase.from("game_accounts").select("in_game_name, game_uid").eq("user_id", user.id).limit(1).maybeSingle(),
+          supabase
+            .from("tournament_registrations")
+            .select("id, slot_number, status")
+            .eq("tournament_id", tournamentId)
+            .eq("user_id", user.id)
+            .maybeSingle(),
         ]);
 
         setPlayerIdentity({
@@ -105,6 +111,20 @@ export default function TournamentRegisterPage() {
           inGameName: gameRes.data?.in_game_name || "ALPHA〆KILLER",
           gameUid: gameRes.data?.game_uid || "1098234871",
         });
+
+        if (regRes.data) {
+          setRegisteredSlot(regRes.data.slot_number);
+          setRegisteredId(regRes.data.id);
+          if (
+            regRes.data.status === "PAYMENT_SUBMITTED" ||
+            regRes.data.status === "APPROVED" ||
+            regRes.data.status === "CHECKED_IN"
+          ) {
+            setStep("confirmed");
+          } else {
+            setStep("payment");
+          }
+        }
       }
     }
 
@@ -143,7 +163,7 @@ export default function TournamentRegisterPage() {
   const handleSubmitPayment = (e: React.FormEvent) => {
     e.preventDefault();
     if (!transactionId.trim()) {
-      setError("Please enter the 10-digit transaction ID from your bKash SMS or app.");
+      setError("Please enter the 10-digit transaction ID (TrxID) from your bKash SMS or app.");
       return;
     }
 
@@ -151,7 +171,7 @@ export default function TournamentRegisterPage() {
     startTransition(async () => {
       const res = await submitPaymentAction(
         tournamentId,
-        registeredId || `reg-${tournamentId}`,
+        registeredId || "",
         entryFeeCents,
         paymentMethod,
         transactionId.trim().toUpperCase(),
@@ -168,7 +188,7 @@ export default function TournamentRegisterPage() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10 space-y-6">
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-6">
       <Link
         href={`/tournaments/${tournamentId}`}
         className="inline-flex items-center gap-2 text-xs font-mono text-slate-500 dark:text-gray-400 hover:text-slate-950 dark:hover:text-white transition-colors"
@@ -177,7 +197,7 @@ export default function TournamentRegisterPage() {
         <span>Back to Tournament Details</span>
       </Link>
 
-      <div className="rounded-3xl bg-surface-100 border border-surface-border p-6 sm:p-8 space-y-6 shadow-2xl">
+      <div className="rounded-3xl bg-surface-100 border border-surface-border p-5 sm:p-8 space-y-6 shadow-2xl">
         {/* Header */}
         <div className="border-b border-surface-border pb-5">
           <div className="flex items-center gap-2 mb-2">
@@ -258,108 +278,122 @@ export default function TournamentRegisterPage() {
           </div>
         )}
 
-        {/* STEP 2: bKASH MERCHANT PAYMENT UI */}
+        {/* STEP 2: AUTHENTIC bKASH PAYMENT UI */}
         {step === "payment" && (
           <form onSubmit={handleSubmitPayment} className="space-y-6 animate-fadeIn">
-            {/* bKash Header Banner */}
-            <div className="p-5 rounded-2xl bg-[#e2136e]/10 border border-[#e2136e]/30 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-[#e2136e] flex items-center justify-center font-display font-black text-white text-sm">
+            {/* bKash Header Bar */}
+            <div className="rounded-2xl overflow-hidden border border-[#e2136e]/40 shadow-xl bg-surface-200">
+              {/* Official Pink Header */}
+              <div className="bg-[#e2136e] px-5 py-3.5 flex items-center justify-between text-white shadow-md">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center font-display font-black text-[#e2136e] text-lg shadow-sm">
                     ৳
                   </div>
                   <div>
-                    <h3 className="font-display text-sm font-bold text-slate-900 dark:text-white uppercase">
-                      bKash Merchant Payment
-                    </h3>
-                    <p className="text-[11px] text-slate-600 dark:text-gray-300 font-mono">
-                      Manual Merchant Confirmation Portal
-                    </p>
+                    <span className="font-display font-black text-sm tracking-wider uppercase block">
+                      bKash Payment
+                    </span>
+                    <span className="text-[10px] text-white/80 font-mono">
+                      Secure Transaction Portal
+                    </span>
                   </div>
                 </div>
-                <Badge variant="crimson">Slot #{registeredSlot || 1} Reserved</Badge>
-              </div>
 
-              {/* Account Number Card */}
-              <div className="p-3.5 rounded-xl bg-surface-100 border border-surface-border flex items-center justify-between">
-                <div>
-                  <span className="text-[10px] uppercase font-mono tracking-wider text-slate-500 dark:text-gray-400 font-bold block">
-                    ARENEX bKash Recipient Number
-                  </span>
-                  <span className="font-mono text-base font-black text-[#e2136e] tracking-wider">
-                    {ARENEX_BKASH_RECIPIENT_NUMBER}
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleCopyNumber}
-                  className="px-3 py-1.5 rounded-lg bg-surface-elevated hover:bg-surface-50 border border-surface-border text-xs font-mono font-bold text-slate-800 dark:text-gray-200 flex items-center gap-1.5 transition-all shadow-sm"
-                >
-                  {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                  <span>{copied ? "Copied!" : "Copy"}</span>
-                </button>
-              </div>
-
-              {/* Exact Amount Notice */}
-              <div className="flex items-center justify-between text-xs font-mono pt-1">
-                <span className="text-slate-600 dark:text-gray-400">Exact Entry Amount:</span>
-                <span className="font-black text-slate-900 dark:text-white text-base">
-                  {formatCurrency(entryFeeCents, currency)}
+                <span className="px-2.5 py-1 rounded-full bg-white/20 text-white text-[11px] font-mono font-bold tracking-wider">
+                  Slot #{registeredSlot || 1}
                 </span>
               </div>
-            </div>
 
-            {/* Step-by-Step Instructions */}
-            <div className="p-4 rounded-xl bg-surface-200 border border-surface-border space-y-2 text-xs font-sans text-slate-700 dark:text-gray-300">
-              <h4 className="font-display font-bold uppercase text-[11px] text-slate-900 dark:text-white tracking-wider">
-                How to Complete Payment:
-              </h4>
-              <ol className="list-decimal list-inside space-y-1 text-xs font-mono text-slate-600 dark:text-gray-400">
-                <li>Open your bKash App on your mobile device.</li>
-                <li>Select <strong>Send Money</strong> or <strong>Payment</strong> to <span className="font-bold text-[#e2136e]">{ARENEX_BKASH_RECIPIENT_NUMBER}</span>.</li>
-                <li>Enter the exact tournament entry amount (<span className="font-bold text-slate-900 dark:text-white">{formatCurrency(entryFeeCents, currency)}</span>).</li>
-                <li>Copy the 10-digit <strong>Transaction ID (TrxID)</strong> from your bKash confirmation SMS or statement.</li>
-                <li>Paste the TrxID below and click Submit.</li>
-              </ol>
-            </div>
+              {/* Card Body */}
+              <div className="p-5 sm:p-6 space-y-5">
+                {/* Account Details & Amount */}
+                <div className="p-4 rounded-xl bg-surface-100 border border-surface-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <span className="text-[10px] uppercase font-mono tracking-wider text-slate-500 dark:text-gray-400 font-bold block">
+                      বিকাশ একাউন্ট নাম্বার (bKash Number)
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-lg sm:text-xl font-black text-[#e2136e] tracking-wider">
+                        {ARENEX_BKASH_RECIPIENT_NUMBER}
+                      </span>
+                    </div>
+                  </div>
 
-            {/* Input Fields */}
-            <div className="space-y-4">
-              <div>
-                <label className="block text-[11px] font-mono uppercase text-slate-700 dark:text-gray-400 font-bold mb-1.5">
-                  bKash Transaction ID (TrxID) *
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. BL92A8ZK91"
-                  value={transactionId}
-                  onChange={(e) => setTransactionId(e.target.value.toUpperCase())}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-surface-200 border border-surface-border text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:border-brand-crimson font-mono font-bold uppercase tracking-wider"
-                />
+                  <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+                    <button
+                      type="button"
+                      onClick={handleCopyNumber}
+                      className="px-3.5 py-2 rounded-xl bg-surface-elevated hover:bg-surface-50 border border-surface-border text-xs font-mono font-bold text-slate-800 dark:text-gray-200 flex items-center gap-1.5 transition-all shadow-sm"
+                    >
+                      {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                      <span>{copied ? "Copied!" : "Copy Number"}</span>
+                    </button>
+
+                    <div className="text-right pl-3 border-l border-surface-border">
+                      <span className="text-[10px] uppercase font-mono tracking-wider text-slate-500 dark:text-gray-400 font-bold block">
+                        অ্যামাউন্ট (Amount)
+                      </span>
+                      <span className="font-mono text-lg font-black text-slate-900 dark:text-white">
+                        {formatCurrency(entryFeeCents, currency)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Instructions */}
+                <div className="p-4 rounded-xl bg-surface-100 border border-surface-border/80 space-y-2 text-xs font-mono text-slate-600 dark:text-gray-300">
+                  <span className="text-[10px] font-bold text-slate-900 dark:text-white uppercase tracking-wider block">
+                    কিভাবে পেমেন্ট করবেন (Payment Instructions):
+                  </span>
+                  <ol className="list-decimal list-inside space-y-1.5 text-xs text-slate-600 dark:text-gray-400">
+                    <li>বিকাশ অ্যাপে <strong>Send Money</strong> অথবা <strong>Payment</strong> সিলেক্ট করুন।</li>
+                    <li>প্রাপক নাম্বারে দিন: <strong className="text-[#e2136e] font-bold">{ARENEX_BKASH_RECIPIENT_NUMBER}</strong></li>
+                    <li>টুর্নামেন্ট ফি <strong className="text-slate-900 dark:text-white">{formatCurrency(entryFeeCents, currency)}</strong> সেন্ড করুন।</li>
+                    <li>বিকাশ কনফার্মেশন থেকে ১০-সংখ্যার <strong>Transaction ID (TrxID)</strong> কপি করে নিচের বক্সে দিন।</li>
+                  </ol>
+                </div>
+
+                {/* Input Fields */}
+                <div className="space-y-4 pt-1">
+                  <div>
+                    <label className="block text-[11px] font-mono uppercase text-slate-700 dark:text-gray-400 font-bold mb-1.5">
+                      Transaction ID (TrxID) দিন *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. BL92A8ZK91"
+                      value={transactionId}
+                      onChange={(e) => setTransactionId(e.target.value.toUpperCase())}
+                      className="w-full px-4 py-3 rounded-xl bg-surface-100 border-2 border-surface-border focus:border-[#e2136e] text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none font-mono font-bold uppercase tracking-widest transition-all"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-mono uppercase text-slate-700 dark:text-gray-400 font-bold mb-1.5">
+                      সেন্ডার বিকাশ নাম্বার (ঐচ্ছিক / Optional)
+                    </label>
+                    <input
+                      type="tel"
+                      placeholder="e.g. 017XXXXXXXX"
+                      value={senderPhone}
+                      onChange={(e) => setSenderPhone(e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-xl bg-surface-100 border border-surface-border focus:border-[#e2136e] text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none font-mono font-medium transition-all"
+                    />
+                  </div>
+                </div>
+
+                {/* Action Submit */}
+                <button
+                  type="submit"
+                  disabled={isPending}
+                  className="w-full py-4 rounded-xl bg-[#e2136e] hover:bg-[#c90f61] text-white font-display font-black text-xs uppercase tracking-widest shadow-lg shadow-[#e2136e]/25 transition-all flex items-center justify-center gap-2 active:scale-[0.99] disabled:opacity-50"
+                >
+                  <span>{isPending ? "যাচাই করা হচ্ছে..." : "পেমেন্ট নিশ্চিত করুন (Confirm Payment)"}</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
               </div>
-
-              <div>
-                <label className="block text-[11px] font-mono uppercase text-slate-700 dark:text-gray-400 font-bold mb-1.5">
-                  Sender Mobile Number (Optional)
-                </label>
-                <input
-                  type="tel"
-                  placeholder="e.g. 017XXXXXXXX"
-                  value={senderPhone}
-                  onChange={(e) => setSenderPhone(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-surface-200 border border-surface-border text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:border-brand-crimson font-mono font-medium"
-                />
-              </div>
             </div>
-
-            <Button
-              type="submit"
-              isLoading={isPending}
-              className="w-full py-3.5 text-xs font-display font-black uppercase tracking-widest bg-brand-crimson hover:bg-brand-crimsonDark text-white shadow-xl shadow-brand-crimson/25"
-            >
-              Submit Payment for Super Admin Confirmation
-            </Button>
           </form>
         )}
 

@@ -3,7 +3,10 @@
 import React, { useState, useTransition } from "react";
 import Link from "next/link";
 import { Tournament, TournamentStatus } from "@/types";
-import { updateTournamentStatusAction } from "@/app/actions/admin-tournament-actions";
+import {
+  updateTournamentStatusAction,
+  deleteTournamentAction,
+} from "@/app/actions/admin-tournament-actions";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -19,6 +22,7 @@ import {
   AlertCircle,
   Radio,
   Edit3,
+  Trash2,
 } from "lucide-react";
 
 interface AdminTournamentsClientProps {
@@ -40,6 +44,22 @@ export function AdminTournamentsClient({
           prev.map((t) => (t.id === tournamentId ? { ...t, status: newStatus } : t))
         );
         setFeedback(`Tournament status transitioned to ${newStatus}`);
+        setTimeout(() => setFeedback(null), 3000);
+      }
+    });
+  };
+
+  const handleDeleteTournament = (tournamentId: string, title: string) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to permanently delete "${title}"?\n\nThis will remove the tournament, registered slots, and room data.`
+    );
+    if (!confirmed) return;
+
+    startTransition(async () => {
+      const res = await deleteTournamentAction(tournamentId);
+      if (res.success) {
+        setTournaments((prev) => prev.filter((t) => t.id !== tournamentId));
+        setFeedback(`Tournament "${title}" was permanently removed.`);
         setTimeout(() => setFeedback(null), 3000);
       }
     });
@@ -133,10 +153,19 @@ export function AdminTournamentsClient({
 
                 <Link
                   href={`/tournaments/${t.id}`}
-                  className="px-3 py-1.5 rounded-lg text-xs font-mono text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white"
+                  className="px-3.5 py-1.5 rounded-lg text-xs font-mono text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white"
                 >
                   View Public →
                 </Link>
+
+                <button
+                  onClick={() => handleDeleteTournament(t.id, t.title)}
+                  disabled={isPending}
+                  className="px-3 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 text-xs font-mono font-bold uppercase transition-colors flex items-center gap-1"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Delete</span>
+                </button>
               </div>
             </div>
 
