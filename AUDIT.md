@@ -200,3 +200,20 @@ To ensure that the official seed tournaments and the `avatars` storage bucket ar
    - Added `revalidatePath("/admin")` so submitted payments immediately appear on the Super Admin Desk.
    - Changed default tournament filter in the admin payment center to `"All Tournaments"`, preventing payments from being filtered out.
 
+---
+
+## 7. September 02, 2026 — ARENEX v2.1.2 Audit (100% Clean Slate & Pure Database Decoupling)
+
+### Key Problems Resolved:
+
+1. **Total Eradication of Hardcoded Seed Tournaments & Rick Astley Demo Match**:
+   - Cleaned `src/lib/seed-data.ts` and `src/lib/store.ts` to start with 0 tournaments, 0 matches, 0 mock participants, and 0 mock ledger records.
+   - Updated `src/app/page.tsx` to asynchronously query `TournamentService.getTournaments()` from Supabase and render high-impact clean empty states when 0 tournaments exist.
+   - Updated `src/app/live/page.tsx` and `src/app/matches/[id]/page.tsx` to query real `LIVE` matches from Supabase. Offline broadcast screen displays cleanly when no tournament match is broadcasting.
+
+2. **Admin Desk Payment History & Approval Queue Fully Connected to Supabase**:
+   - Fixed PostgREST ambiguous relationship errors in `src/app/admin/page.tsx` and `src/app/admin/finance/payments/page.tsx` by querying tables directly and safely mapping user profiles and tournament metadata.
+   - Connected `src/app/admin/finance/ledger/page.tsx`, `src/app/admin/audit/page.tsx`, and `src/app/admin/disputes/page.tsx` to live Supabase tables.
+   - Eliminated any in-memory fallback to demo stores. When the database is fresh, the platform is a 100% clean slate, ready for real administrator input, dynamic calculation, and instant payment approval.
+
+

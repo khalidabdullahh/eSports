@@ -47,83 +47,21 @@ class EsportsDataStore {
   private notifications: AppNotification[] = [];
   private currentUserId: string = "user-player-1"; // Default active visitor/player mode
 
-  constructor() {
-    this.seed();
-  }
-
   private seed() {
-    // Seed profiles
+    // Seed profiles if any
     SEED_PROFILES.forEach((p) => this.profiles.set(p.id, p));
 
-    // Seed tournaments
-    this.tournaments.set(DEMO_TOURNAMENT.id, { ...DEMO_TOURNAMENT });
+    // Seed tournaments if any
+    if (DEMO_TOURNAMENT) {
+      this.tournaments.set(DEMO_TOURNAMENT.id, { ...DEMO_TOURNAMENT });
+    }
     ADDITIONAL_TOURNAMENTS.forEach((t) => this.tournaments.set(t.id, { ...t }));
 
-    // Seed room credential
-    this.roomCredentials.set(DEMO_ROOM_CREDENTIAL.tournament_id, { ...DEMO_ROOM_CREDENTIAL });
-
-    // Seed registrations
-    SEED_PROFILES.filter((p) => p.role === "PLAYER").forEach((p, idx) => {
-      const regId = `reg-${p.id}`;
-      const reg: TournamentRegistration = {
-        id: regId,
-        tournament_id: DEMO_TOURNAMENT_ID,
-        user_id: p.id,
-        slot_number: idx + 1,
-        status: idx < 3 ? "CHECKED_IN" : "APPROVED",
-        user: p,
-        checked_in_at: idx < 3 ? "2026-08-29T15:35:00Z" : undefined,
-        created_at: "2026-08-26T12:00:00Z",
-      };
-      this.registrations.set(regId, reg);
-
-      const pay: Payment = {
-        id: `pay-${p.id}`,
-        tournament_id: DEMO_TOURNAMENT_ID,
-        registration_id: regId,
-        user_id: p.id,
-        user: p,
-        amount_cents: 5000,
-        currency: "BDT",
-        payment_method: "bkash",
-        transaction_id: `TRX${Math.floor(100000000 + Math.random() * 900000000)}`,
-        status: "VERIFIED",
-        verified_by: "user-finance-1",
-        verified_at: "2026-08-26T14:00:00Z",
-        submitted_at: "2026-08-26T12:05:00Z",
-      };
-      this.payments.set(pay.id, pay);
-    });
-
-    // Seed match
-    const match: Match = {
-      id: DEMO_MATCH_ID,
-      tournament_id: DEMO_TOURNAMENT_ID,
-      match_number: 1,
-      title: "Round 1 — Finals",
-      status: "LIVE",
-      started_at: "2026-08-29T16:15:00Z",
-      participants: [...INITIAL_MATCH_PARTICIPANTS],
-      created_at: "2026-08-29T16:00:00Z",
-    };
-    this.matches.set(match.id, match);
-
-    // Seed events, ledger, audit
+    // Empty initial structures for true production clean slate
     this.events = [...INITIAL_MATCH_EVENTS];
     this.ledger = [...INITIAL_LEDGER_ENTRIES];
     this.auditLogs = [...INITIAL_AUDIT_LOGS];
-
-    // Seed notifications
-    this.notifications.push({
-      id: "notif-1",
-      user_id: "user-player-alpha",
-      title: "Room Credentials Released",
-      message: "Room ID & Password for Night Battle Solo Cup are now visible in your dashboard.",
-      type: "ROOM",
-      link_url: `/tournaments/${DEMO_TOURNAMENT_ID}/room`,
-      is_read: false,
-      created_at: "2026-08-29T15:45:00Z",
-    });
+    this.notifications = [];
   }
 
   // --- Auth / User Context ---

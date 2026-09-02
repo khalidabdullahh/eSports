@@ -1,6 +1,5 @@
 import React from "react";
 import Link from "next/link";
-import { dataStore } from "@/lib/store";
 import { createClient } from "@/lib/supabase/server";
 import { AdminConsoleClient } from "./admin-console-client";
 import { Shield, Plus } from "lucide-react";
@@ -8,7 +7,6 @@ import { Shield, Plus } from "lucide-react";
 export const dynamic = "force-dynamic";
 
 export default async function AdminDashboardPage() {
-  const isProduction = process.env.NODE_ENV === "production";
   const isSupabaseConfigured = Boolean(
     process.env.NEXT_PUBLIC_SUPABASE_URL &&
     !process.env.NEXT_PUBLIC_SUPABASE_URL.includes("demo")
@@ -33,41 +31,59 @@ export default async function AdminDashboardPage() {
       dRes,
       aRes,
       mRes,
+      profRes,
     ] = await Promise.all([
       supabase.from("tournaments").select("*").order("created_at", { ascending: false }),
-      supabase
-        .from("payments")
-        .select("*, user:profiles(display_name, username)")
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("tournament_registrations")
-        .select("*, user:profiles(display_name, username)")
-        .order("created_at", { ascending: false }),
+      supabase.from("payments").select("*").order("created_at", { ascending: false }),
+      supabase.from("tournament_registrations").select("*").order("created_at", { ascending: false }),
       supabase.from("financial_ledger").select("*").order("created_at", { ascending: false }),
       supabase.from("disputes").select("*").order("created_at", { ascending: false }),
       supabase.from("audit_logs").select("*").order("created_at", { ascending: false }).limit(50),
       supabase.from("matches").select("*").order("created_at", { ascending: false }).limit(10),
+      supabase.from("profiles").select("id, display_name, username, email, free_fire_uid, in_game_name"),
     ]);
 
+    const profileMap = new Map((profRes.data || []).map((p: any) => [p.id, p]));
+    const tourMap = new Map((tRes.data || []).map((t: any) => [t.id, t]));
+
     tournaments = tRes.data || [];
-    payments = pRes.data || [];
-    registrations = rRes.data || [];
+    payments = (pRes.data || []).map((p: any) => {
+      const userProf = profileMap.get(p.user_id);
+      const tour = tourMap.get(p.tournament_id);
+      return {
+        ...p,
+        user: userProf || {
+          display_name: userProf?.display_name || userProf?.username || "Warrior",
+          username: userProf?.username || "player",
+          email: userProf?.email,
+        },
+        tournament: tour || {
+          title: "Tournament",
+          entry_fee_cents: p.amount_cents,
+          currency: p.currency,
+        },
+      };
+    });
+
+    registrations = (rRes.data || []).map((r: any) => {
+      const userProf = profileMap.get(r.user_id);
+      const tour = tourMap.get(r.tournament_id);
+      return {
+        ...r,
+        user: userProf || {
+          display_name: userProf?.display_name || userProf?.username || "Warrior",
+          username: userProf?.username || "player",
+        },
+        tournament: tour || {
+          title: "Tournament",
+        },
+      };
+    });
+
     ledger = lRes.data || [];
     disputes = dRes.data || [];
     auditLogs = aRes.data || [];
     matches = mRes.data || [];
-  }
-
-  // Fallback to dataStore if Supabase has zero tournaments in local mode
-  if (tournaments.length === 0 && !isProduction) {
-    tournaments = dataStore.getTournaments();
-    payments = dataStore.getPayments();
-    registrations = dataStore.getRegistrations();
-    ledger = dataStore.getLedger();
-    disputes = dataStore.getDisputes();
-    auditLogs = dataStore.getAuditLogs();
-    const demoMatch = dataStore.getMatch("match-night-battle-round-1");
-    matches = demoMatch ? [demoMatch] : [];
   }
 
   return (
