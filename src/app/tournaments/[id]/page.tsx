@@ -144,21 +144,37 @@ export default async function TournamentDetailPage({
 
             {/* CTAs */}
             <div className="pt-2 space-y-2">
-              {userRegistration ? (
+              {userRegistration && userRegistration.status !== "CANCELLED" ? (
                 <div className="space-y-2">
-                  <div className="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-xs text-emerald-300 flex items-center justify-between">
+                  <div className={`p-2.5 rounded-lg border text-xs flex items-center justify-between ${
+                    userRegistration.status === "APPROVED" || userRegistration.status === "CHECKED_IN"
+                      ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
+                      : userRegistration.status === "PAYMENT_SUBMITTED"
+                      ? "bg-amber-500/10 border-amber-500/30 text-amber-300"
+                      : "bg-cyan-500/10 border-cyan-500/30 text-cyan-300"
+                  }`}>
                     <span>Slot Status:</span>
                     <span className="font-mono font-bold uppercase">
-                      {userRegistration.status}
+                      {userRegistration.status.replace(/_/g, " ")}
                     </span>
                   </div>
-                  <Link
-                    href={`/tournaments/${tournament.id}/room`}
-                    className="w-full py-2.5 rounded-lg bg-brand-crimson hover:bg-brand-crimsonDark text-white font-display font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-md shadow-brand-crimson/25"
-                  >
-                    <Lock className="w-4 h-4" />
-                    Enter Match Room Key
-                  </Link>
+
+                  {userRegistration.status === "APPROVED" || userRegistration.status === "CHECKED_IN" ? (
+                    <Link
+                      href={`/tournaments/${tournament.id}/room`}
+                      className="w-full py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-display font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-md shadow-emerald-600/25"
+                    >
+                      <Lock className="w-4 h-4" />
+                      Enter Match Room Gate
+                    </Link>
+                  ) : (
+                    <Link
+                      href={`/tournaments/${tournament.id}/register`}
+                      className="w-full py-2.5 rounded-lg bg-brand-crimson hover:bg-brand-crimsonDark text-white font-display font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-md shadow-brand-crimson/25"
+                    >
+                      <span>{userRegistration.status === "PAYMENT_SUBMITTED" ? "View Payment Status" : "Complete bKash Payment"}</span>
+                    </Link>
+                  )}
                 </div>
               ) : isLive ? (
                 <Link

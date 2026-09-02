@@ -231,5 +231,20 @@ When `SEED_PROFILES` was emptied to achieve a 100% clean slate, `dataStore.getCu
 2. **Safe Unauthenticated Navbar Handling**: Refactored `src/components/navbar.tsx` to directly inspect Supabase `authUser` and default unauthenticated state safely without querying uninitialized in-memory stores.
 3. **Protected Dashboard & Notification Routes**: Updated `src/app/dashboard/page.tsx` and `src/app/notifications/page.tsx` to redirect unauthenticated requests directly to `/login` and dynamically fetch profile, registrations, and transactions directly from Supabase.
 
+---
+
+## 9. September 02, 2026 — ARENEX v2.1.4 Audit (Payment Rejection Workflow & Tournament Status Isolation)
+
+### Root Cause of Tournament Apparent Cancellation on Payment Rejection:
+1. In `rejectPaymentAction` (`src/app/actions/tournament-actions.ts`), rejecting a payment was updating `tournament_registrations` status to `CANCELLED`.
+2. On `/tournaments/[id]`, the CTA box detected any non-null `userRegistration` regardless of status, displaying `Slot Status: CANCELLED` and locking out the user from submitting a new payment.
+3. Full route cache revalidations were missing for the tournament public page and registration page.
+
+### Solutions Implemented:
+1. **Isolated Registration Status**: In `rejectPaymentAction`, updated registration status to `PENDING_PAYMENT` so the slot is preserved and the user can easily re-submit their correct bKash TrxID without cancelling the registration or affecting the tournament.
+2. **Granular CTA Actions**: Updated `src/app/tournaments/[id]/page.tsx` to handle `PENDING_PAYMENT`, `PAYMENT_SUBMITTED`, `APPROVED`, and `CANCELLED` registrations distinctly.
+3. **Comprehensive Path Revalidations**: Added revalidation across `/tournaments/[id]`, `/tournaments/[id]/register`, `/admin`, `/admin/tournaments`, `/admin/finance/payments`, and `/dashboard`.
+
+
 
 

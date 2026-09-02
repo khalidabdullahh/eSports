@@ -428,19 +428,25 @@ export async function rejectPaymentAction(paymentId: string, reason: string) {
       }
 
       if (paymentRow) {
+        // Set registration back to PENDING_PAYMENT so user can re-submit a valid TrxID without closing or cancelling the tournament slot
         await supabase
           .from("tournament_registrations")
-          .update({ status: "CANCELLED" })
+          .update({ status: "PENDING_PAYMENT", updated_at: new Date().toISOString() })
           .eq("id", paymentRow.registration_id);
 
         await supabase.from("notifications").insert({
           user_id: paymentRow.user_id,
-          title: "Payment Submission Rejected",
-          message: `Your payment was rejected: ${reason.trim()}. Please verify your transaction ID or submit a dispute.`,
+          title: "Payment Submission Review",
+          message: `Your payment submission was not approved: ${reason.trim()}. Please verify your bKash TrxID and re-submit.`,
           type: "PAYMENT",
           link_url: `/tournaments/${paymentRow.tournament_id}/register`,
         });
 
+        revalidatePath(`/tournaments/${paymentRow.tournament_id}`);
+        revalidatePath(`/tournaments/${paymentRow.tournament_id}/register`);
+        revalidatePath("/tournaments");
+        revalidatePath("/admin");
+        revalidatePath("/admin/tournaments");
         revalidatePath("/admin/finance/payments");
         revalidatePath("/dashboard");
         return { success: true, payment: paymentRow };
