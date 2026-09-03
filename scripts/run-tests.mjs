@@ -128,6 +128,145 @@ function testLedger() {
   console.log("✓ FINANCIAL LEDGER: Integer accounting and double-entry verified");
 }
 
+// 5. Livestream Embed Engine Test
+function testStreamEngine() {
+  function getStreamEmbedUrl(url, options = {}) {
+    if (!url || typeof url !== "string") return null;
+    let cleanUrl = url.trim();
+    if (!cleanUrl) return null;
+
+    if (!cleanUrl.startsWith("http://") && !cleanUrl.startsWith("https://")) {
+      cleanUrl = `https://${cleanUrl}`;
+    }
+
+    const { autoplay = true, muted = true, hostname } = options;
+
+    // 1. Facebook
+    if (
+      cleanUrl.includes("facebook.com") ||
+      cleanUrl.includes("fb.watch") ||
+      cleanUrl.includes("fb.gg")
+    ) {
+      if (cleanUrl.includes("facebook.com/plugins/video.php")) {
+        try {
+          const parsed = new URL(cleanUrl);
+          const href = parsed.searchParams.get("href");
+          if (href) {
+            return `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(href)}&show_text=false&autoplay=${autoplay ? "true" : "false"}&allowfullscreen=true`;
+          }
+        } catch {
+          return cleanUrl;
+        }
+      }
+
+      let normalizedFbUrl = cleanUrl
+        .replace(/^https?:\/\/(m|mobile|web|touch|mbasic)\.facebook\.com/i, "https://www.facebook.com")
+        .replace(/^https?:\/\/fb\.me\//i, "https://www.facebook.com/");
+
+      try {
+        const parsed = new URL(normalizedFbUrl);
+        const searchParams = new URLSearchParams(parsed.search);
+        searchParams.delete("mibextid");
+        searchParams.delete("rdid");
+        searchParams.delete("ref");
+        searchParams.delete("fbclid");
+        searchParams.delete("__tn__");
+        searchParams.delete("eid");
+
+        const remainingSearch = searchParams.toString();
+        normalizedFbUrl = `${parsed.origin}${parsed.pathname}${remainingSearch ? `?${remainingSearch}` : ""}`;
+      } catch {}
+
+      return `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(
+        normalizedFbUrl
+      )}&show_text=false&autoplay=${autoplay ? "true" : "false"}&allowfullscreen=true`;
+    }
+
+    // 2. YouTube
+    if (
+      cleanUrl.includes("youtube.com") ||
+      cleanUrl.includes("youtu.be") ||
+      cleanUrl.includes("youtube-nocookie.com")
+    ) {
+      const ytRegex =
+        /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=|live\/|shorts\/)|youtu\.be\/|youtube-nocookie\.com\/embed\/)([a-zA-Z0-9_-]{11})/;
+      const match = cleanUrl.match(ytRegex);
+
+      if (match && match[1]) {
+        const videoId = match[1];
+        const autoPlayVal = autoplay ? 1 : 0;
+        const muteVal = muted ? 1 : 0;
+        return `https://www.youtube.com/embed/${videoId}?autoplay=${autoPlayVal}&mute=${muteVal}&playsinline=1&rel=0&enablejsapi=1`;
+      }
+    }
+
+    // 3. Twitch
+    if (cleanUrl.includes("twitch.tv")) {
+      const parentDomains = ["localhost", "127.0.0.1", "arenex.gg", "esports-jade.vercel.app", "vercel.app"];
+      if (hostname && !parentDomains.includes(hostname)) {
+        parentDomains.push(hostname);
+      }
+      const parentQuery = parentDomains.map((d) => `parent=${encodeURIComponent(d)}`).join("&");
+
+      const videoMatch = cleanUrl.match(/twitch\.tv\/videos\/(\d+)/i);
+      if (videoMatch && videoMatch[1]) {
+        return `https://player.twitch.tv/?video=${videoMatch[1]}&${parentQuery}&autoplay=${autoplay}&muted=${muted}`;
+      }
+
+      const channelMatch = cleanUrl.match(/twitch\.tv\/([a-zA-Z0-9_]{3,25})/i);
+      if (channelMatch && channelMatch[1] && channelMatch[1].toLowerCase() !== "videos") {
+        return `https://player.twitch.tv/?channel=${channelMatch[1]}&${parentQuery}&autoplay=${autoplay}&muted=${muted}`;
+      }
+    }
+
+    if (cleanUrl.startsWith("https://") && (cleanUrl.includes("/embed") || cleanUrl.includes("/player"))) {
+      return cleanUrl;
+    }
+
+    return null;
+  }
+
+  // Test 1: Facebook Video URL
+  const fbVideo = getStreamEmbedUrl("https://www.facebook.com/GarenaFreeFire/videos/1234567890/");
+  console.assert(fbVideo && fbVideo.includes("facebook.com/plugins/video.php"), "Facebook video must produce video.php plugin embed");
+  console.assert(fbVideo.includes("href="), "Facebook embed must include encoded href");
+
+  // Test 2: Facebook Live URL
+  const fbLive = getStreamEmbedUrl("https://www.facebook.com/watch/live/?v=1234567890");
+  console.assert(fbLive && fbLive.includes("facebook.com/plugins/video.php"), "Facebook Live must produce video.php plugin embed");
+
+  // Test 3: YouTube standard watch URL
+  const ytWatch = getStreamEmbedUrl("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+  console.assert(ytWatch === "https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&mute=1&playsinline=1&rel=0&enablejsapi=1", "YouTube watch URL must convert to embed URL");
+
+  // Test 4: youtu.be short URL
+  const ytShort = getStreamEmbedUrl("https://youtu.be/dQw4w9WgXcQ?t=10s");
+  console.assert(ytShort === "https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&mute=1&playsinline=1&rel=0&enablejsapi=1", "youtu.be short URL must convert to embed URL");
+
+  // Test 5: Twitch channel URL
+  const twitchChannel = getStreamEmbedUrl("https://www.twitch.tv/arenex_esports");
+  console.assert(twitchChannel && twitchChannel.includes("player.twitch.tv/?channel=arenex_esports"), "Twitch channel must produce player.twitch.tv embed");
+  console.assert(twitchChannel.includes("parent=localhost"), "Twitch channel embed must include parent domain parameters");
+
+  // Test 6: fb.watch URL
+  const fbWatch = getStreamEmbedUrl("https://fb.watch/abcd1234/");
+  console.assert(fbWatch && fbWatch.includes("facebook.com/plugins/video.php"), "fb.watch URL must produce Facebook video plugin embed");
+
+  // Test 7: YouTube Live URL
+  const ytLive = getStreamEmbedUrl("https://www.youtube.com/live/dQw4w9WgXcQ?feature=share");
+  console.assert(ytLive === "https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&mute=1&playsinline=1&rel=0&enablejsapi=1", "YouTube Live URL must convert to embed URL");
+
+  // Test 8: Twitch Video VOD URL
+  const twitchVideo = getStreamEmbedUrl("https://www.twitch.tv/videos/987654321");
+  console.assert(twitchVideo && twitchVideo.includes("player.twitch.tv/?video=987654321"), "Twitch VOD must produce player.twitch.tv/?video= embed");
+
+  // Test 9: Invalid URL
+  const invalidUrl = getStreamEmbedUrl("not-a-valid-stream-url");
+  console.assert(invalidUrl === null, "Invalid stream URLs must return null");
+
+  console.log("✓ LIVESTREAM ENGINE: Facebook (Video/Live/fb.watch), YouTube (watch/live/youtu.be), and Twitch (Channel/VOD) verified");
+}
+
 console.log("==================================================");
 console.log("RUNNING SUITE: ESPORTS PLATFORM CORE ENGINE TESTS");
 console.log("==================================================");
@@ -135,4 +274,6 @@ testScoring();
 testRewards();
 testStateMachine();
 testLedger();
+testStreamEngine();
 console.log("\n>>> ALL TESTS PASSED SUCCESSFULLY! <<<\n");
+

@@ -243,7 +243,17 @@ html:not(.dark) ::-webkit-scrollbar-thumb {
   font-variant-numeric: tabular-nums;
 }
 
-/* Mobile safe area padding */
+/* Mobile natural touch scrolling & safe area rules */
 .safe-area-bottom {
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 0.5rem);
 }
+
+.overflow-x-auto,
+.overflow-y-auto {
+  -webkit-overflow-scrolling: touch;
+}
+
+html, body {
+  min-height: 100dvh;
+}
+

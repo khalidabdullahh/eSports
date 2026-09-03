@@ -31,7 +31,7 @@ import {
   MessageSquare,
   Trash2,
 } from "lucide-react";
-import { formatCurrency, formatDateTime } from "@/lib/utils";
+import { formatCurrency, formatDateTime, getStreamEmbedUrl, validateLivestreamUrl } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import {
   updateTournamentStatusAction,
@@ -204,10 +204,18 @@ export function AdminConsoleClient({
     e.preventDefault();
     if (!selectedTourId) return;
 
+    if (streamUrl.trim()) {
+      const validation = validateLivestreamUrl(streamUrl);
+      if (!validation.isValid) {
+        showNotification("error", validation.error || "Please provide a valid stream URL.");
+        return;
+      }
+    }
+
     startTransition(async () => {
       const res = await updateTournamentStreamAction(selectedTourId, streamUrl, streamPlatform);
       if (res.success) {
-        showNotification("success", "Live stream URL updated successfully!");
+        showNotification("success", "Live stream URL verified & updated successfully!");
         router.refresh();
       } else {
         showNotification("error", res.error || "Failed to update stream");
@@ -1086,24 +1094,26 @@ export function AdminConsoleClient({
               </h3>
 
               <div className="aspect-video rounded-2xl bg-black border border-surface-border overflow-hidden flex items-center justify-center">
-                {streamUrl ? (
+                {streamUrl && getStreamEmbedUrl(streamUrl) ? (
                   <iframe
-                    src={
-                      streamUrl.includes("facebook.com")
-                        ? `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(streamUrl)}&show_text=false&autoplay=false`
-                        : streamUrl.includes("youtube.com/watch?v=")
-                        ? `https://www.youtube.com/embed/${streamUrl.split("v=")[1]?.split("&")[0]}`
-                        : streamUrl
-                    }
+                    src={getStreamEmbedUrl(streamUrl, {
+                      autoplay: false,
+                      muted: true,
+                      hostname: typeof window !== "undefined" ? window.location.hostname : undefined,
+                    })!}
                     title="Live Stream Preview"
-                    className="w-full h-full"
+                    className="w-full h-full border-0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                     allowFullScreen
                   />
                 ) : (
-                  <div className="text-center p-4">
-                    <Tv className="w-8 h-8 text-gray-600 mx-auto mb-2" />
-                    <p className="text-xs text-gray-500 font-mono">
-                      No stream URL configured yet.
+                  <div className="text-center p-6 space-y-2">
+                    <Tv className="w-8 h-8 text-gray-600 mx-auto" />
+                    <p className="text-xs text-gray-400 font-mono font-bold">
+                      {streamUrl ? "Invalid or unsupported stream URL format." : "No stream URL configured yet."}
+                    </p>
+                    <p className="text-[11px] text-gray-500 font-mono max-w-xs mx-auto">
+                      Supports Facebook Live/Video, YouTube (watch/live/shorts), and Twitch channel streams.
                     </p>
                   </div>
                 )}

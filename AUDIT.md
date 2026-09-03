@@ -245,6 +245,46 @@ When `SEED_PROFILES` was emptied to achieve a 100% clean slate, `dataStore.getCu
 2. **Granular CTA Actions**: Updated `src/app/tournaments/[id]/page.tsx` to handle `PENDING_PAYMENT`, `PAYMENT_SUBMITTED`, `APPROVED`, and `CANCELLED` registrations distinctly.
 3. **Comprehensive Path Revalidations**: Added revalidation across `/tournaments/[id]`, `/tournaments/[id]/register`, `/admin`, `/admin/tournaments`, `/admin/finance/payments`, and `/dashboard`.
 
+---
+
+## 10. September 03, 2026 — ARENEX v2.1.5 Audit (Mobile Viewport Scroll Hierarchy & Multi-Platform Livestream Engine)
+
+### 1. Root Cause of Mobile Scroll & UI Clipping:
+- **Fixed Navigation Overlap**: `src/components/mobile-nav.tsx` renders a fixed bottom navigation bar (`h-16` / 64px + safe area). In `src/app/layout.tsx`, `<main>` had no bottom padding (`pb-0`), causing bottom action buttons (e.g. Save Profile, Submit Payment, Create Tournament Draft) on `/profile`, `/admin`, `/tournaments/[id]/register`, and `/dashboard` to be physically obscured and clipped beneath the fixed bar on mobile viewports (320px–430px).
+- **Viewport Height Jitter**: Auth screens and modals used static `100vh` / `80vh` instead of mobile-safe dynamic viewport units (`100dvh`), leading to vertical clipping when mobile address bars expand or collapse.
+
+### 2. Solutions Implemented for Mobile Scrolling:
+- **Global Safe-Area Layout**: Updated `src/app/layout.tsx` to set `body` to `min-h-[100dvh]` and `<main>` to `flex-1 w-full pb-20 lg:pb-0 safe-area-bottom`. This provides a guaranteed ~80px clear scrollable zone above the mobile bar across all pages.
+- **Enhanced Mobile Touch Scrolling**: Configured `-webkit-overflow-scrolling: touch` and updated `.safe-area-bottom` with dynamic `env(safe-area-inset-bottom)` in `src/app/globals.css`.
+
+### 3. Root Cause of Livestream Embed Error:
+- **Facebook URL Encoding & Query Fragility**: Previous implementation in `src/lib/utils.ts` did not sanitize mobile Facebook subdomains (`m.facebook.com`), tracking query parameters (`mibextid`, `fbclid`), or already-constructed plugin URLs, causing double-encoding and broken iframes on Facebook Live and video URLs.
+- **YouTube Format Limitations**: Incomplete regex only handled basic `youtube.com/watch` queries, failing on `youtube.com/live`, `youtube.com/shorts`, and parameterized `youtu.be` links.
+- **Twitch Parent Restrictions**: Twitch embeds lacked multiple `parent` domain declarations (`localhost`, `arenex.gg`, `esports-jade.vercel.app`, `vercel.app`, and dynamic hostname), causing Twitch to block video playback.
+
+### 4. Solutions Implemented for Livestream Engine:
+- **Unified Multi-Platform Converter (`src/lib/utils.ts`)**: Built a robust `getStreamEmbedUrl` and `validateLivestreamUrl` supporting:
+  - **Facebook**: Public videos (`/videos/`), Facebook Live (`/watch/live/`), Watch (`/watch/?v=`), `fb.watch`, and sanitized plugin URLs.
+  - **YouTube**: Watch URLs (`/watch?v=`), short links (`youtu.be/`), Live streams (`/live/`), Shorts (`/shorts/`), and embed URLs with automated mute/autoplay/rel parameters.
+  - **Twitch**: Live channels and VODs (`/videos/`) with multi-parent whitelist domains.
+- **Enhanced Live Match Console (`src/components/live-match-console.tsx`)**: Upgraded iframe permissions with `web-share`, `picture-in-picture`, and clean fallback states for unconfigured or invalid streams.
+- **Admin Console Stream Preview (`src/app/admin/admin-console-client.tsx`)**: Added automated stream URL validation on save and instant live preview.
+
+### 5. Files Changed:
+- `src/lib/utils.ts`
+- `src/components/live-match-console.tsx`
+- `src/app/admin/admin-console-client.tsx`
+- `src/app/layout.tsx`
+- `src/app/globals.css`
+- `scripts/run-tests.mjs`
+- `AUDIT.md`
+
+### 6. Validation & Build Results:
+- `node scripts/run-tests.mjs`: 100% passed (5/5 suites passing including Livestream Engine).
+- `npx tsc --noEmit`: 0 errors.
+- `npm run build`: 19/19 static pages compiled successfully.
+
+
 
 
 

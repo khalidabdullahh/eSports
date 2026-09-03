@@ -159,10 +159,14 @@ export function LiveMatchConsole({
           <div className="relative aspect-video rounded-2xl overflow-hidden bg-black border border-surface-border shadow-2xl">
             {tournament.stream_url && getStreamEmbedUrl(tournament.stream_url) ? (
               <iframe
-                src={getStreamEmbedUrl(tournament.stream_url)!}
+                src={getStreamEmbedUrl(tournament.stream_url, {
+                  autoplay: true,
+                  muted: true,
+                  hostname: typeof window !== "undefined" ? window.location.hostname : undefined,
+                })!}
                 title="Live Esports Match Stream"
-                className="w-full h-full"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                className="w-full h-full border-0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 allowFullScreen
               />
             ) : (
@@ -172,7 +176,9 @@ export function LiveMatchConsole({
                   Arena Telemetry Active
                 </h3>
                 <p className="text-xs text-gray-400 mt-1 max-w-sm font-sans">
-                  OBS stream uplink connecting. Follow the official referee telemetry and live leaderboard below.
+                  {tournament.stream_url
+                    ? "OBS stream uplink connecting. Follow official referee telemetry and live leaderboard below."
+                    : "No public broadcast stream configured for this match. Follow live telemetry and kill feed below."}
                 </p>
               </div>
             )}

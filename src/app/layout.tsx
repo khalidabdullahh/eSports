@@ -56,12 +56,12 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="min-h-screen flex flex-col bg-background text-slate-900 dark:text-gray-100 antialiased font-sans">
+      <body className="min-h-[100dvh] flex flex-col bg-background text-slate-900 dark:text-gray-100 antialiased font-sans">
         <Suspense fallback={null}>
           <NavigationProgress />
         </Suspense>
         <Navbar />
-        <main className="flex-1 w-full">{children}</main>
+        <main className="flex-1 w-full pb-20 lg:pb-0 safe-area-bottom">{children}</main>
         <Footer />
         <MobileNav />
       </body>
