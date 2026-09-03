@@ -61,7 +61,7 @@ export default function RootLayout({
           <NavigationProgress />
         </Suspense>
         <Navbar />
-        <main className="flex-1 w-full pb-20 lg:pb-0 safe-area-bottom">{children}</main>
+        <main className="flex-1 w-full pb-28 sm:pb-32 lg:pb-0 safe-area-bottom">{children}</main>
         <Footer />
         <MobileNav />
       </body>

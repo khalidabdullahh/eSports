@@ -257,3 +257,38 @@ html, body {
   min-height: 100dvh;
 }
 
+/* ============================================================
+   TACTICAL ESPORTS ENTRANCE ANIMATIONS (ADMIN & ARENA PORTALS)
+   ============================================================ */
+
+@keyframes adminPortalEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(16px) scale(0.992);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-admin-portal {
+  animation: adminPortalEnter 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+

@@ -284,6 +284,41 @@ When `SEED_PROFILES` was emptied to achieve a 100% clean slate, `dataStore.getCu
 - `npx tsc --noEmit`: 0 errors.
 - `npm run build`: 19/19 static pages compiled successfully.
 
+---
+
+## 11. September 03, 2026 — ARENEX v2.1.6 Audit (Admin Bottom Scroll Clearance & Local Timezone Tournament Defaults)
+
+### 1. Root Cause of Admin Mobile Scrolling & Cut-Off Cards:
+- **Inadequate Bottom Padding vs Fixed Nav**: Mobile viewport height calculations did not account for the combined height of the fixed bottom navigation bar (64px) + device safe area (20px–34px) + mobile browser UI bars. As a result, the bottom-most sections on `/admin` (Quick Operations, Room Credentials, Stream Preview, and Financial Ledger Table) and `/admin/tournaments/new` were cut off when scrolled to the maximum document bottom.
+- **UTC vs Local Timezone Shift in Form Defaults**: In `src/app/admin/tournaments/new/page.tsx`, `toISOString().slice(0, 16)` generated UTC timestamps. In Bangladesh (UTC+6), HTML5 `datetime-local` inputs interpreted the UTC string as local time, shifting all displayed default dates 6 hours into the past (e.g., showing 3:28 PM instead of 9:28 PM).
+
+### 2. Solutions Implemented:
+- **Local Timezone Input Formatter**: Added `toLocalDateTimeInput(date)` in `src/app/admin/tournaments/new/page.tsx` to format `Date` objects according to the administrator's local system timezone.
+- **Operational Timeline Defaults**:
+  - **Registration Opens**: Current local time (`Now`).
+  - **Registration Closes**: Exactly **12 hours** after current time (`Now + 12 Hours`).
+  - **Scheduled Match Start**: Exactly **30 minutes** after registration closes (`Registration Closes + 30 Minutes`).
+- **Expanded Mobile Bottom Clearance**:
+  - In `src/app/layout.tsx`: Updated `<main>` to `pb-28 sm:pb-32 lg:pb-0 safe-area-bottom`.
+  - In `src/app/admin/admin-console-client.tsx`: Added `pb-32 sm:pb-24` on the root container.
+  - In `src/app/admin/page.tsx`, `src/app/admin/tournaments/page.tsx`, `src/app/admin/finance/payments/page.tsx`, `src/app/admin/finance/ledger/page.tsx`, and `src/app/admin/tournaments/new/page.tsx`: Added `pb-32 sm:pb-24` to ensure all cards, action buttons, inputs, and tables scroll comfortably above the mobile bottom bar with ~50px of visible breathing room.
+
+### 3. Files Changed:
+- `src/app/admin/tournaments/new/page.tsx`
+- `src/app/admin/admin-console-client.tsx`
+- `src/app/admin/page.tsx`
+- `src/app/admin/tournaments/page.tsx`
+- `src/app/admin/finance/payments/page.tsx`
+- `src/app/admin/finance/ledger/page.tsx`
+- `src/app/layout.tsx`
+- `AUDIT.md`
+
+### 4. Verification Results:
+- `node scripts/run-tests.mjs`: 100% passed.
+- `npx tsc --noEmit`: 0 errors.
+- `npm run build`: 19/19 pages compiled successfully.
+
+
 
 
 

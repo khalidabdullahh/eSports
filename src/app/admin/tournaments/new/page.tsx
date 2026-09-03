@@ -17,6 +17,17 @@ import {
 import { createTournamentAction } from "@/app/actions/admin-tournament-actions";
 import { TournamentFormat } from "@/types";
 
+// Helper to format Date for HTML5 datetime-local input in local timezone
+function toLocalDateTimeInput(date: Date): string {
+  const pad = (n: number) => n.toString().padStart(2, "0");
+  const year = date.getFullYear();
+  const month = pad(date.getMonth() + 1);
+  const day = pad(date.getDate());
+  const hours = pad(date.getHours());
+  const minutes = pad(date.getMinutes());
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
 export default function AdminNewTournamentPage() {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -34,15 +45,23 @@ export default function AdminNewTournamentPage() {
   const [perfPrizeBdt, setPerfPrizeBdt] = useState("500");
   const [maxParticipants, setMaxParticipants] = useState("48");
 
-  // Dates
-  const now = new Date();
-  const defaultRegOpen = new Date(now.getTime() + 10 * 60 * 1000).toISOString().slice(0, 16);
-  const defaultRegClose = new Date(now.getTime() + 6 * 3600 * 1000).toISOString().slice(0, 16);
-  const defaultStart = new Date(now.getTime() + 7 * 3600 * 1000).toISOString().slice(0, 16);
+  // Operational Timeline Defaults:
+  // 1. Registration Opens: Current local time (Now)
+  // 2. Registration Closes: At least 12 hours from now
+  // 3. Match Scheduled Start: 30 minutes after registration closes
+  const [registrationOpenAt, setRegistrationOpenAt] = useState(() => {
+    return toLocalDateTimeInput(new Date());
+  });
 
-  const [registrationOpenAt, setRegistrationOpenAt] = useState(defaultRegOpen);
-  const [registrationCloseAt, setRegistrationCloseAt] = useState(defaultRegClose);
-  const [scheduledStartAt, setScheduledStartAt] = useState(defaultStart);
+  const [registrationCloseAt, setRegistrationCloseAt] = useState(() => {
+    const closeDate = new Date(Date.now() + 12 * 60 * 60 * 1000); // 12 hours later
+    return toLocalDateTimeInput(closeDate);
+  });
+
+  const [scheduledStartAt, setScheduledStartAt] = useState(() => {
+    const startDate = new Date(Date.now() + 12 * 60 * 60 * 1000 + 30 * 60 * 1000); // 12.5 hours later
+    return toLocalDateTimeInput(startDate);
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,7 +111,7 @@ export default function AdminNewTournamentPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-6">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12 pb-32 sm:pb-24 space-y-6 animate-admin-portal">
       {/* Back Link */}
       <Link
         href="/admin"
