@@ -146,15 +146,18 @@ export function SupportClient() {
           </div>
           <div>
             <h3 className="font-display text-lg font-bold text-slate-900 dark:text-white uppercase">
-              Financial Desk
+              Financial & Support Desk
             </h3>
             <p className="text-xs text-slate-600 dark:text-gray-400 mt-1 font-sans">
-              For transaction reconciliations and business inquiries:
+              For transaction reconciliations and direct assistance:
             </p>
           </div>
-          <span className="font-mono text-xs text-brand-crimson font-bold block">
-            support@arenex.gg
-          </span>
+          <a
+            href="mailto:seamafridi1237890@gmail.com"
+            className="font-mono text-xs text-brand-crimson font-bold block hover:underline break-all"
+          >
+            seamafridi1237890@gmail.com
+          </a>
         </div>
       </div>
 
