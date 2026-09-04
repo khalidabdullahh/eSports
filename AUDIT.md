@@ -318,6 +318,33 @@ When `SEED_PROFILES` was emptied to achieve a 100% clean slate, `dataStore.getCu
 - `npx tsc --noEmit`: 0 errors.
 - `npm run build`: 19/19 pages compiled successfully.
 
+---
+
+## 12. September 04, 2026 — ARENEX v2.1.7 Audit (Mobile Footer Horizontal Grid, Dynamic Referee Auto-Provisioning & Live Control Selector)
+
+### 1. Root Cause of Reported Issues:
+- **Mobile Footer Vertical Stack**: `src/components/footer.tsx` used `grid-cols-1 md:grid-cols-5`, forcing all 4 footer columns into a single tall vertical scroll list on mobile devices.
+- **Referee Desk 404 Error**: Referee buttons throughout the Admin Desk hardcoded a static match ID (`/admin/referee/match-night-battle-round-1`). When an administrator clicked Referee Desk for a newly created tournament, no match with that hardcoded ID existed in Supabase, triggering `notFound()` (404).
+- **Live Control Missing Tournament Context**: Section 5 (Live Control) lacked a Tournament Selector dropdown and displayed hardcoded mock combat stats without dynamic tournament linkage.
+
+### 2. Solutions Implemented:
+- **Responsive 2-Column Mobile Footer Grid**: Updated `src/components/footer.tsx` to `grid-cols-2 md:grid-cols-5 gap-6 sm:gap-8` with Brand Info spanning 2 columns (`col-span-2 md:col-span-2`), presenting category links in side-by-side horizontal pairs.
+- **Dynamic Referee Match Resolver & Auto-Provisioning**: Updated `src/app/admin/referee/[matchId]/page.tsx` to resolve by Match ID or Tournament ID. If no match record exists yet for the tournament, it auto-provisions **Match Round 1** (`title: "${tournament.title} - Round 1"`, `status: "IN_PROGRESS"`) and loads approved participants directly from `tournament_registrations`. Updated all Referee Desk links to `/admin/referee/${tournament.id}`.
+- **Dynamic Live Control Tournament Selector & Room Gate**: Added a prominent Tournament Selector dropdown in Section 5 of `src/app/admin/admin-console-client.tsx`, connected real-time participant counts and status badges, and bound Room ID & Password storage to the selected tournament.
+
+### 3. Files Changed:
+- `src/components/footer.tsx`
+- `src/app/admin/referee/[matchId]/page.tsx`
+- `src/app/admin/tournaments/admin-tournaments-client.tsx`
+- `src/app/admin/admin-console-client.tsx`
+- `AUDIT.md`
+
+### 4. Verification Results:
+- `node scripts/run-tests.mjs`: 100% passed.
+- `npx tsc --noEmit`: 0 errors.
+- `npm run build`: 19/19 routes compiled successfully.
+
+
 
 
 

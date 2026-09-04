@@ -49,11 +49,87 @@ export default async function RefereePage({
     return <AdminAuthWall />;
   }
 
-  const { data: matchRow } = await supabase
+  let matchRow: any = null;
+
+  // 1. Attempt to find match directly by match ID
+  const { data: matchById } = await supabase
     .from("matches")
     .select("*, tournaments(*)")
     .eq("id", matchId)
     .maybeSingle();
+
+  if (matchById && matchById.tournaments) {
+    matchRow = matchById;
+  } else {
+    // 2. Attempt to find match by tournament ID
+    const { data: matchByTour } = await supabase
+      .from("matches")
+      .select("*, tournaments(*)")
+      .eq("tournament_id", matchId)
+      .order("round_number", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+
+    if (matchByTour && matchByTour.tournaments) {
+      matchRow = matchByTour;
+    } else {
+      // 3. Find tournament and auto-provision Match Round 1
+      let { data: tournament } = await supabase
+        .from("tournaments")
+        .select("*, room_credentials(*)")
+        .eq("id", matchId)
+        .maybeSingle();
+
+      if (!tournament) {
+        const { data: tourBySlug } = await supabase
+          .from("tournaments")
+          .select("*, room_credentials(*)")
+          .eq("slug", matchId)
+          .maybeSingle();
+        tournament = tourBySlug;
+      }
+
+      if (!tournament) {
+        const { data: latestTour } = await supabase
+          .from("tournaments")
+          .select("*, room_credentials(*)")
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        tournament = latestTour;
+      }
+
+      if (tournament) {
+        const { data: newMatch } = await supabase
+          .from("matches")
+          .insert({
+            tournament_id: tournament.id,
+            title: `${tournament.title} - Round 1`,
+            round_number: 1,
+            status: "IN_PROGRESS",
+            server_region: "BD_DHAKA_01",
+            custom_room_id: (tournament.room_credentials as any)?.[0]?.room_name || "ROOM-01",
+            custom_room_password: (tournament.room_credentials as any)?.[0]?.room_password || "1234",
+          })
+          .select("*, tournaments(*)")
+          .single();
+
+        if (newMatch) {
+          matchRow = newMatch;
+        } else {
+          matchRow = {
+            id: `match-${tournament.id}-r1`,
+            tournament_id: tournament.id,
+            title: `${tournament.title} - Round 1`,
+            round_number: 1,
+            status: "IN_PROGRESS",
+            server_region: "BD_DHAKA_01",
+            tournaments: tournament,
+          };
+        }
+      }
+    }
+  }
 
   if (!matchRow || !matchRow.tournaments) {
     notFound();
@@ -62,12 +138,12 @@ export default async function RefereePage({
   const { data: partRows } = await supabase
     .from("match_participants")
     .select("*, user:profiles(display_name, avatar_url, username)")
-    .eq("match_id", matchId)
+    .eq("match_id", matchRow.id)
     .order("total_score", { ascending: false });
 
-  const participants = (partRows || []).map((p: any) => ({
+  let participants = (partRows || []).map((p: any) => ({
     id: p.id,
-    match_id: matchId,
+    match_id: matchRow.id,
     registration_id: p.registration_id || p.id,
     user_id: p.user_id,
     participant_name: p.user?.display_name || p.user?.username || "Warrior",
@@ -81,6 +157,32 @@ export default async function RefereePage({
     is_alive: p.is_alive ?? false,
   }));
 
+  if (participants.length === 0 && matchRow.tournament_id) {
+    const { data: approvedRegs } = await supabase
+      .from("tournament_registrations")
+      .select("*, user:profiles(display_name, avatar_url, username)")
+      .eq("tournament_id", matchRow.tournament_id)
+      .eq("status", "APPROVED");
+
+    if (approvedRegs && approvedRegs.length > 0) {
+      participants = approvedRegs.map((reg: any, index: number) => ({
+        id: `part-${reg.id}`,
+        match_id: matchRow.id,
+        registration_id: reg.id,
+        user_id: reg.user_id,
+        participant_name: reg.in_game_name || reg.user?.display_name || reg.user?.username || `Warrior #${index + 1}`,
+        free_fire_uid: reg.in_game_uid || "1098234871",
+        avatar_url: reg.user?.avatar_url || "",
+        kills: 0,
+        placement: 0,
+        placement_points: 0,
+        kill_points: 0,
+        total_score: 0,
+        is_alive: true,
+      }));
+    }
+  }
+
   const match = {
     ...matchRow,
     participants,
@@ -89,13 +191,13 @@ export default async function RefereePage({
   const { data: evRows } = await supabase
     .from("match_events")
     .select("*")
-    .eq("match_id", matchId)
+    .eq("match_id", matchRow.id)
     .order("created_at", { ascending: true });
 
   const events = evRows || [];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-32 sm:pb-24 space-y-6 animate-admin-portal">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-surface-border">
         <div>

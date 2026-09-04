@@ -78,7 +78,7 @@ export function AdminConsoleClient({
 
   const [tournaments, setTournaments] = useState(initialTournaments);
   const [payments, setPayments] = useState(initialPayments);
-  const [selectedTourId, setSelectedTourId] = useState<string>("");
+  const [selectedTourId, setSelectedTourId] = useState<string>(initialTournaments[0]?.id || "");
 
   const [paymentFilter, setPaymentFilter] = useState<"ALL" | "SUBMITTED" | "VERIFIED" | "REJECTED">("ALL");
   const [paymentSearch, setPaymentSearch] = useState("");
@@ -86,9 +86,12 @@ export function AdminConsoleClient({
   const [streamUrl, setStreamUrl] = useState(initialTournaments[0]?.stream_url || "");
   const [streamPlatform, setStreamPlatform] = useState(initialTournaments[0]?.stream_platform || "facebook");
 
-  const [roomName, setRoomName] = useState("ARENEX-BATTLE-01");
-  const [roomPass, setRoomPass] = useState("1234");
-  const [roomReleaseTime, setRoomReleaseTime] = useState(new Date().toISOString().slice(0, 16));
+  const initialRc = (initialTournaments[0]?.room_credentials as any)?.[0];
+  const [roomName, setRoomName] = useState(initialRc?.room_name || "ARENEX-BATTLE-01");
+  const [roomPass, setRoomPass] = useState(initialRc?.room_password || "1234");
+  const [roomReleaseTime, setRoomReleaseTime] = useState(
+    initialRc?.release_at ? new Date(initialRc.release_at).toISOString().slice(0, 16) : new Date().toISOString().slice(0, 16)
+  );
 
   const [isPending, startTransition] = useTransition();
   const [notification, setNotification] = useState<{ type: "success" | "error"; msg: string } | null>(null);
@@ -98,7 +101,8 @@ export function AdminConsoleClient({
     setTimeout(() => setNotification(null), 4000);
   };
 
-  // Metrics
+  // Active Tournament & Metrics
+  const selectedTournament = tournaments.find((t) => t.id === selectedTourId) || tournaments[0];
   const pendingPayments = payments.filter((p) => p.status === "SUBMITTED");
   const verifiedPayments = payments.filter((p) => p.status === "VERIFIED");
   const activeTournaments = tournaments.filter(
@@ -400,7 +404,7 @@ export function AdminConsoleClient({
 
               <div className="flex flex-wrap items-center gap-3 pt-2">
                 <Link
-                  href="/admin/referee/match-night-battle-round-1"
+                  href={`/admin/referee/${tournaments[0]?.id || "live"}`}
                   className="px-5 py-2.5 rounded-xl bg-brand-crimson hover:bg-brand-crimsonDark text-white font-display font-bold text-xs uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-brand-crimson/25 transition-all"
                 >
                   <UploadCloud className="w-4 h-4" />
@@ -597,7 +601,7 @@ export function AdminConsoleClient({
 
                   {t.status === "LIVE" && (
                     <Link
-                      href={`/admin/referee/match-night-battle-round-1`}
+                      href={`/admin/referee/${t.id}`}
                       className="px-3.5 py-2 rounded-xl bg-brand-crimson text-white font-display font-bold text-xs uppercase hover:bg-brand-crimsonDark transition-colors flex items-center gap-1 shadow-md shadow-brand-crimson/25"
                     >
                       <UploadCloud className="w-3.5 h-3.5" />
@@ -902,40 +906,104 @@ export function AdminConsoleClient({
             </p>
           </div>
 
+          {/* Target Tournament Selector */}
+          <div className="p-4 sm:p-5 rounded-2xl bg-surface-100 border border-surface-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-lg">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-brand-crimson/15 text-brand-crimson border border-brand-crimson/20">
+                <Trophy className="w-5 h-5" />
+              </div>
+              <div>
+                <span className="text-[10px] font-mono text-gray-400 uppercase font-bold block">
+                  Select Target Tournament
+                </span>
+                <span className="text-sm font-display font-bold text-white uppercase">
+                  {selectedTournament?.title || "No tournament available"}
+                </span>
+              </div>
+            </div>
+
+            <div className="w-full sm:w-80">
+              <select
+                value={selectedTourId}
+                onChange={(e) => {
+                  setSelectedTourId(e.target.value);
+                  const tour = tournaments.find((t) => t.id === e.target.value);
+                  if (tour) {
+                    setStreamUrl(tour.stream_url || "");
+                    setStreamPlatform(tour.stream_platform || "facebook");
+                    if (tour.room_credentials && (tour.room_credentials as any).length > 0) {
+                      const rc = (tour.room_credentials as any)[0];
+                      setRoomName(rc.room_name || "");
+                      setRoomPass(rc.room_password || "");
+                      if (rc.release_at) {
+                        setRoomReleaseTime(new Date(rc.release_at).toISOString().slice(0, 16));
+                      }
+                    }
+                  }
+                }}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-surface-200 border border-surface-border text-xs text-white font-sans font-bold focus:outline-none focus:border-brand-crimson"
+              >
+                {tournaments.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.title} ({t.status})
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Match Status Card */}
             <div className="p-6 rounded-3xl bg-surface-100 border border-surface-border space-y-4 shadow-xl">
               <div className="flex items-center justify-between pb-3 border-b border-surface-border">
-                <h3 className="font-display text-base font-bold text-white uppercase">
-                  Match Round 1 (Bermuda Solo)
-                </h3>
-                <Badge variant="live" pulse>
-                  IN PROGRESS
+                <div>
+                  <h3 className="font-display text-base font-bold text-white uppercase">
+                    {selectedTournament?.title || "Tournament Match"}
+                  </h3>
+                  <p className="text-[11px] font-mono text-gray-400">
+                    {selectedTournament?.format || "SOLO"} • {selectedTournament?.mode || "Battle Royale"}
+                  </p>
+                </div>
+                <Badge
+                  variant={
+                    selectedTournament?.status === "LIVE"
+                      ? "live"
+                      : selectedTournament?.status === "REGISTRATION_OPEN"
+                      ? "emerald"
+                      : "surface"
+                  }
+                  pulse={selectedTournament?.status === "LIVE"}
+                >
+                  {selectedTournament?.status || "DRAFT"}
                 </Badge>
               </div>
 
               <div className="space-y-2 text-xs font-mono text-gray-300">
                 <div className="flex justify-between py-1 border-b border-surface-border/50">
-                  <span className="text-gray-500">Active Warriors in Combat:</span>
-                  <span className="font-bold text-emerald-400">7 Alive / 48 Total</span>
+                  <span className="text-gray-500">Registered Warriors:</span>
+                  <span className="font-bold text-emerald-400">
+                    {selectedTournament?.current_participants_count || 0} / {selectedTournament?.max_participants || 48} Enrolled
+                  </span>
                 </div>
                 <div className="flex justify-between py-1 border-b border-surface-border/50">
-                  <span className="text-gray-500">Eliminations Recorded:</span>
-                  <span className="font-bold text-brand-crimson">41 Frags</span>
+                  <span className="text-gray-500">Entry Ticket:</span>
+                  <span className="font-bold text-white">
+                    {formatCurrency(selectedTournament?.entry_fee_cents || 0, selectedTournament?.currency || "BDT")}
+                  </span>
                 </div>
                 <div className="flex justify-between py-1">
                   <span className="text-gray-500">Telemetry Engine:</span>
-                  <span className="font-bold text-white">Server-Authoritative</span>
+                  <span className="font-bold text-cyan-400">Server-Authoritative</span>
                 </div>
               </div>
 
               <div className="pt-2 flex gap-3">
                 <Link
-                  href="/admin/referee/match-night-battle-round-1"
+                  href={`/admin/referee/${selectedTournament?.id || "live"}`}
                   className="w-full py-3 rounded-xl bg-brand-crimson hover:bg-brand-crimsonDark text-white font-display font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-brand-crimson/25 transition-all"
                 >
                   <Edit3 className="w-4 h-4" />
-                  <span>Update Player Stats & Frags</span>
+                  <span>Open Referee Input Console</span>
                 </Link>
               </div>
             </div>
@@ -945,8 +1013,11 @@ export function AdminConsoleClient({
               <div className="flex items-center justify-between pb-3 border-b border-surface-border">
                 <h3 className="font-display text-base font-bold text-white uppercase flex items-center gap-2">
                   <Lock className="w-4 h-4 text-cyan-400" />
-                  <span>Room ID & Password Gate (Option B)</span>
+                  <span>Room ID & Password Gate</span>
                 </h3>
+                <Badge variant="cyan">
+                  {selectedTournament?.title ? selectedTournament.title.slice(0, 16) : "Tournament"}
+                </Badge>
               </div>
 
               <form onSubmit={handleSaveRoomCredentials} className="space-y-3.5">
@@ -957,6 +1028,7 @@ export function AdminConsoleClient({
                   <input
                     type="text"
                     required
+                    placeholder="e.g. ARENEX-ROOM-01"
                     value={roomName}
                     onChange={(e) => setRoomName(e.target.value)}
                     className="w-full px-3.5 py-2 rounded-xl bg-surface-200 border border-surface-border text-xs text-white font-mono font-bold"
@@ -971,6 +1043,7 @@ export function AdminConsoleClient({
                     <input
                       type="text"
                       required
+                      placeholder="e.g. 1234"
                       value={roomPass}
                       onChange={(e) => setRoomPass(e.target.value)}
                       className="w-full px-3.5 py-2 rounded-xl bg-surface-200 border border-surface-border text-xs text-white font-mono font-bold"
@@ -993,7 +1066,7 @@ export function AdminConsoleClient({
 
                 <button
                   type="submit"
-                  disabled={isPending}
+                  disabled={isPending || !selectedTournament}
                   className="w-full py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-black font-display font-bold text-xs uppercase tracking-wider transition-all"
                 >
                   Save & Lock Room Gate
