@@ -344,9 +344,27 @@ When `SEED_PROFILES` was emptied to achieve a 100% clean slate, `dataStore.getCu
 - `npx tsc --noEmit`: 0 errors.
 - `npm run build`: 19/19 routes compiled successfully.
 
+---
 
+## 13. September 04, 2026 — ARENEX v2.1.8 Audit (Ultra-Compact Mobile Footer & Social Media Hub)
 
+### 1. Root Cause & Requirements:
+- **Mobile Screen Space**: Mobile users reported the footer taking up a full screen height (~700px+), burying content and navigation.
+- **Social Media Hub**: Need for direct community connection buttons: Facebook, WhatsApp, and Discord.
+- **Official WhatsApp Channel**: Direct link to the official AreNex WhatsApp Channel (`https://whatsapp.com/channel/0029Vb9GN1zLY6dGJJNXM42f`).
 
+### 2. Solutions Implemented:
+- **Responsive Dual-Mode Footer Architecture** (`src/components/footer.tsx`):
+  - **Mobile Layout (`md:hidden`)**: Ultra-compact design with centered logo, concise tagline, Facebook / WhatsApp / Discord community action buttons, inline compact bullet-separated navigation links (`Tournaments • Live Stream • Rankings • Rules • Terms • Privacy • Support • About • Developer`), and tiny copyright + active status badge (<180px total height vs 700px+ previously).
+  - **Desktop Layout (`hidden md:block`)**: Full 5-column layout with social icons integrated into the brand column and bottom bar.
+  - **Authentic Brand SVG Icons**: Custom SVG brand icons for Facebook, WhatsApp, and Discord with active hover and scale micro-interactions.
+  - **Verified Official WhatsApp URL**: Direct link to `https://whatsapp.com/channel/0029Vb9GN1zLY6dGJJNXM42f`.
 
+### 3. Files Changed:
+- `src/components/footer.tsx`
+- `AUDIT.md`
 
-
+### 4. Verification Results:
+- `node scripts/run-tests.mjs`: 100% passed (5/5).
+- `npx tsc --noEmit`: 0 errors.
+- `npm run build`: 19/19 routes compiled successfully.
