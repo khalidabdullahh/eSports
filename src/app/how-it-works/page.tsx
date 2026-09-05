@@ -155,7 +155,7 @@ export default function HowItWorksPage() {
   ];
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16 space-y-14">
+    <div className="max-w-5xl mx-auto px-3.5 sm:px-6 lg:px-8 py-8 sm:py-16 space-y-10 sm:space-y-14">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-xs font-mono text-slate-500 dark:text-gray-400">
         <Link href="/" className="hover:text-brand-crimson transition-colors flex items-center gap-1">

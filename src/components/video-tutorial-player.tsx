@@ -20,6 +20,13 @@ import {
   Sparkles,
   ExternalLink,
   Zap,
+  Film,
+  Maximize2,
+  Check,
+  Copy,
+  Flame,
+  ShieldCheck,
+  Video,
 } from "lucide-react";
 import { ARENEX_BKASH_RECIPIENT_NUMBER } from "@/lib/constants";
 
@@ -35,7 +42,7 @@ interface TutorialScene {
   mockupType: "home" | "signup" | "whatsapp" | "tournament" | "payment" | "room" | "payout";
 }
 
-const TUTORIAL_SCENES: TutorialScene[] = [
+export const TUTORIAL_SCENES: TutorialScene[] = [
   {
     id: 1,
     title: "ওয়েবসাইটে প্রবেশ ও প্ল্যাটফর্ম পরিচিতি",
@@ -150,17 +157,30 @@ const TUTORIAL_SCENES: TutorialScene[] = [
   },
 ];
 
-export function VideoTutorialPlayer() {
+interface VideoTutorialPlayerProps {
+  externalVideoUrl?: string;
+}
+
+export function VideoTutorialPlayer({ externalVideoUrl }: VideoTutorialPlayerProps) {
+  const [activeTab, setActiveTab] = useState<"simulator" | "video">("simulator");
   const [currentSceneIndex, setCurrentSceneIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [progress, setProgress] = useState(0);
-  const speechSynthRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
   const currentScene = TUTORIAL_SCENES[currentSceneIndex];
 
-  // Voice narration handler
-  const playVoiceNarration = (text: string) => {
+  const handleCopy = (text: string, key: string) => {
+    if (typeof navigator !== "undefined") {
+      navigator.clipboard.writeText(text);
+      setCopiedKey(key);
+      setTimeout(() => setCopiedKey(null), 2000);
+    }
+  };
+
+  // Male Voice Synthesis Handler (Optimized for deep, natural Bengali male tone)
+  const playMaleVoiceNarration = (text: string) => {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
 
     window.speechSynthesis.cancel();
@@ -168,25 +188,31 @@ export function VideoTutorialPlayer() {
 
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = "bn-BD";
-    utterance.rate = 0.95;
-    utterance.pitch = 1.0;
+    // Natural male vocal characteristics: slightly deeper pitch & steady pacing
+    utterance.pitch = 0.85;
+    utterance.rate = 0.92;
 
-    // Try to find a Bengali voice if available
     const voices = window.speechSynthesis.getVoices();
-    const bnVoice = voices.find(
-      (v) => v.lang.includes("bn") || v.lang.includes("Bengali") || v.name.includes("Bangla")
-    );
-    if (bnVoice) {
-      utterance.voice = bnVoice;
+    // Prioritize Bengali male voices if present on system
+    const maleVoice = voices.find(
+      (v) =>
+        (v.lang.includes("bn") || v.lang.includes("Bengali")) &&
+        (v.name.toLowerCase().includes("male") ||
+          v.name.toLowerCase().includes("ripon") ||
+          v.name.toLowerCase().includes("bashir") ||
+          v.name.toLowerCase().includes("natural"))
+    ) || voices.find((v) => v.lang.includes("bn") || v.lang.includes("Bengali"));
+
+    if (maleVoice) {
+      utterance.voice = maleVoice;
     }
 
-    speechSynthRef.current = utterance;
     window.speechSynthesis.speak(utterance);
   };
 
   const handlePlay = () => {
     setIsPlaying(true);
-    playVoiceNarration(currentScene.banglaVoiceScript);
+    playMaleVoiceNarration(currentScene.banglaVoiceScript);
   };
 
   const handlePause = () => {
@@ -196,19 +222,27 @@ export function VideoTutorialPlayer() {
     }
   };
 
+  const handleTogglePlay = () => {
+    if (isPlaying) {
+      handlePause();
+    } else {
+      handlePlay();
+    }
+  };
+
   const handleSceneChange = (index: number) => {
     const nextIndex = Math.max(0, Math.min(TUTORIAL_SCENES.length - 1, index));
     setCurrentSceneIndex(nextIndex);
     setProgress(0);
     if (isPlaying) {
-      playVoiceNarration(TUTORIAL_SCENES[nextIndex].banglaVoiceScript);
+      playMaleVoiceNarration(TUTORIAL_SCENES[nextIndex].banglaVoiceScript);
     }
   };
 
   // Progress ticker when playing
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    if (isPlaying) {
+    if (isPlaying && activeTab === "simulator") {
       const stepMs = 100;
       const totalMs = currentScene.durationSeconds * 1000;
       interval = setInterval(() => {
@@ -228,349 +262,488 @@ export function VideoTutorialPlayer() {
     }
 
     return () => clearInterval(interval);
-  }, [isPlaying, currentSceneIndex, currentScene]);
+  }, [isPlaying, currentSceneIndex, currentScene, activeTab]);
+
+  // Clean up speech on unmount
+  useEffect(() => {
+    return () => {
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
 
   // Handle mute toggle
   const toggleMute = () => {
-    setIsMuted(!isMuted);
-    if (!isMuted) {
+    const nextMuted = !isMuted;
+    setIsMuted(nextMuted);
+    if (nextMuted) {
       if (typeof window !== "undefined" && "speechSynthesis" in window) {
         window.speechSynthesis.cancel();
       }
     } else if (isPlaying) {
-      playVoiceNarration(currentScene.banglaVoiceScript);
+      playMaleVoiceNarration(currentScene.banglaVoiceScript);
     }
   };
 
   return (
-    <div className="rounded-3xl bg-surface-100 border border-surface-border overflow-hidden shadow-2xl space-y-0 relative">
-      {/* Tactical Header Bar */}
-      <div className="bg-surface-200 px-5 sm:px-6 py-4 border-b border-surface-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <div className="rounded-2xl sm:rounded-3xl bg-surface-100 border border-surface-border overflow-hidden shadow-2xl relative w-full">
+      {/* Top Bar: Mode Switcher & Title */}
+      <div className="bg-surface-200/95 backdrop-blur-md px-4 sm:px-6 py-3.5 border-b border-surface-border flex flex-col md:flex-row md:items-center justify-between gap-3">
+        {/* Left Badge & Header */}
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-brand-crimson/15 border border-brand-crimson/30 flex items-center justify-center text-brand-crimson">
-            <Sparkles className="w-5 h-5 animate-pulse" />
+          <div className="w-9 h-9 rounded-xl bg-brand-crimson/15 border border-brand-crimson/30 flex items-center justify-center text-brand-crimson shrink-0">
+            <Film className="w-4 h-4 sm:w-5 sm:h-5 text-brand-crimson animate-pulse" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
               <span className="text-[10px] font-mono uppercase tracking-widest text-brand-crimson font-bold">
-                OFFICIAL VIDEO TUTORIAL
+                OFFICIAL WALKTHROUGH
               </span>
-              <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 font-mono text-[10px] font-bold border border-emerald-500/30">
-                BANGLA VOICEOVER
+              <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 font-mono text-[9px] sm:text-[10px] font-bold border border-emerald-500/30">
+                MALE VOICE (BUNTY AI)
               </span>
             </div>
-            <h3 className="font-display text-sm sm:text-base font-black text-slate-900 dark:text-white uppercase tracking-tight">
-              ARENEX ব্যবহার ও টুর্নামেন্টে অংশগ্রহণের সম্পূর্ণ গাইড
+            <h3 className="font-display text-xs sm:text-sm md:text-base font-black text-slate-900 dark:text-white uppercase tracking-tight line-clamp-1">
+              ARENEX টুর্নামেন্টে অংশগ্রহণের সম্পূর্ণ গাইড
             </h3>
           </div>
         </div>
 
-        {/* Scene Selector Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto py-1 font-mono text-xs">
-          {TUTORIAL_SCENES.map((scene, idx) => (
-            <button
-              key={scene.id}
-              onClick={() => handleSceneChange(idx)}
-              className={`px-3 py-1.5 rounded-xl font-bold uppercase transition-all whitespace-nowrap text-[11px] flex items-center gap-1.5 ${
-                currentSceneIndex === idx
-                  ? "bg-brand-crimson text-white shadow-md shadow-brand-crimson/30"
-                  : "bg-surface-elevated text-slate-600 dark:text-gray-400 hover:text-slate-950 dark:hover:text-white"
-              }`}
-            >
-              <span>{idx + 1}.</span>
-              <span>{scene.title.slice(0, 10)}...</span>
-            </button>
-          ))}
+        {/* Right: Tab Mode Switcher */}
+        <div className="flex items-center gap-1 bg-surface-100 p-1 rounded-xl border border-surface-border self-start md:self-auto font-mono text-xs">
+          <button
+            onClick={() => {
+              setActiveTab("simulator");
+            }}
+            className={`px-3 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 transition-all ${
+              activeTab === "simulator"
+                ? "bg-brand-crimson text-white shadow-md shadow-brand-crimson/30"
+                : "text-slate-600 dark:text-gray-400 hover:text-white"
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>ইন্টারেক্টিভ সিমুলেটর</span>
+          </button>
+          <button
+            onClick={() => {
+              handlePause();
+              setActiveTab("video");
+            }}
+            className={`px-3 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 transition-all ${
+              activeTab === "video"
+                ? "bg-brand-crimson text-white shadow-md shadow-brand-crimson/30"
+                : "text-slate-600 dark:text-gray-400 hover:text-white"
+            }`}
+          >
+            <Video className="w-3.5 h-3.5" />
+            <span>ফুল ভিডিও (MP4)</span>
+          </button>
         </div>
       </div>
 
-      {/* Main Video Viewport (16:9 Display Mockup) */}
-      <div className="relative aspect-[16/9] bg-black overflow-hidden flex flex-col justify-between p-5 sm:p-8">
-        {/* Subtle Cyber Grid Background */}
-        <div className="absolute inset-0 bg-[radial-gradient(#e2136e_1px,transparent_1px)] [background-size:24px_24px] opacity-15 pointer-events-none" />
+      {activeTab === "simulator" ? (
+        <>
+          {/* Responsive Chapter Stepper Bar */}
+          <div className="bg-surface-200/60 px-4 sm:px-6 py-2.5 border-b border-surface-border flex items-center justify-between gap-2 overflow-x-auto scrollbar-none">
+            <div className="flex items-center gap-1.5 sm:gap-2 min-w-max">
+              {TUTORIAL_SCENES.map((scene, idx) => (
+                <button
+                  key={scene.id}
+                  onClick={() => handleSceneChange(idx)}
+                  className={`px-2.5 sm:px-3 py-1 rounded-lg text-[10px] sm:text-xs font-mono font-bold uppercase transition-all flex items-center gap-1.5 ${
+                    currentSceneIndex === idx
+                      ? "bg-cyan-500/15 text-cyan-400 border border-cyan-500/40 shadow-sm"
+                      : "bg-surface-100/60 text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white border border-transparent"
+                  }`}
+                >
+                  <span className="w-4 h-4 rounded-full bg-surface-200 flex items-center justify-center text-[9px] font-black">
+                    {idx + 1}
+                  </span>
+                  <span className="hidden md:inline">{scene.title.slice(0, 14)}...</span>
+                </button>
+              ))}
+            </div>
 
-        {/* Top Watermark & Scene Tag */}
-        <div className="relative z-10 flex items-center justify-between">
-          <div className="flex items-center gap-2 bg-black/60 backdrop-blur-md px-3.5 py-1.5 rounded-xl border border-white/10 text-xs font-mono text-white">
-            <span className="w-2 h-2 rounded-full bg-brand-crimson animate-pulse" />
-            <span className="font-bold">ARENEX SIMULATOR</span>
-            <span className="text-gray-500">|</span>
-            <span className="text-cyan-400">
-              SCENE {currentSceneIndex + 1} OF {TUTORIAL_SCENES.length}
-            </span>
+            {/* Audio Mute Toggle */}
+            <button
+              onClick={toggleMute}
+              className="p-1.5 sm:p-2 rounded-lg bg-surface-100 hover:bg-surface-200 border border-surface-border text-gray-300 hover:text-white transition-all shrink-0 ml-2"
+              title={isMuted ? "Unmute Voice" : "Mute Voice"}
+            >
+              {isMuted ? (
+                <VolumeX className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-400" />
+              ) : (
+                <Volume2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-400" />
+              )}
+            </button>
           </div>
 
-          <button
-            onClick={toggleMute}
-            className="p-2.5 rounded-xl bg-black/60 backdrop-blur-md hover:bg-black/80 border border-white/10 text-gray-300 hover:text-white transition-all"
-            title={isMuted ? "Unmute Bangla Voice" : "Mute Voice"}
-          >
-            {isMuted ? <VolumeX className="w-4 h-4 text-red-400" /> : <Volume2 className="w-4 h-4 text-cyan-400" />}
-          </button>
-        </div>
+          {/* Main Simulated Display Screen */}
+          <div className="relative min-h-[380px] sm:min-h-[460px] md:aspect-[16/9] bg-[#070b13] overflow-hidden flex flex-col justify-between p-4 sm:p-6 md:p-8">
+            {/* Cyber Grid Pattern */}
+            <div className="absolute inset-0 bg-[radial-gradient(#e2136e_1px,transparent_1px)] [background-size:24px_24px] opacity-10 pointer-events-none" />
 
-        {/* Center Scene Content Simulation */}
-        <div className="relative z-10 max-w-2xl mx-auto w-full text-center space-y-4 my-auto">
-          {/* Animated Mockup Graphic by Scene */}
-          {currentScene.mockupType === "home" && (
-            <div className="p-6 rounded-2xl bg-surface-100/90 border border-surface-border/80 backdrop-blur-md shadow-2xl space-y-3 animate-fadeIn">
-              <div className="w-12 h-12 rounded-xl bg-brand-crimson/20 text-brand-crimson border border-brand-crimson/30 flex items-center justify-center mx-auto shadow-lg">
-                <Trophy className="w-6 h-6" />
+            {/* Top Scene Tracker Header */}
+            <div className="relative z-10 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 bg-black/70 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10 text-[11px] sm:text-xs font-mono text-white">
+                <span className="w-2 h-2 rounded-full bg-brand-crimson animate-pulse" />
+                <span className="font-bold">SCENE {currentSceneIndex + 1} OF 7</span>
+                <span className="text-gray-500 hidden sm:inline">|</span>
+                <span className="text-cyan-400 font-bold hidden sm:inline">{currentScene.title}</span>
               </div>
-              <h4 className="font-display text-xl sm:text-2xl font-black text-white uppercase">
-                Welcome to ARENEX Esports Arena
-              </h4>
-              <p className="text-xs text-gray-300 font-sans leading-relaxed max-w-lg mx-auto">
-                Discover live Free Fire solo and squad cups. Guaranteed prize pools and automated double-entry verification.
-              </p>
-              <div className="flex items-center justify-center gap-2 pt-1 font-mono text-[11px]">
-                <span className="px-3 py-1 rounded-lg bg-cyan-500/10 text-cyan-300 border border-cyan-500/30">
-                  ✓ 100% Secure bKash Integration
-                </span>
-                <span className="px-3 py-1 rounded-lg bg-emerald-500/10 text-emerald-300 border border-emerald-500/30">
-                  ✓ Instant Match Decryption
-                </span>
+
+              <div className="flex items-center gap-1.5 text-xs font-mono text-gray-400 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-xl border border-white/10">
+                <span className="text-amber-400 font-bold">⏱ {currentScene.durationSeconds}s</span>
               </div>
             </div>
-          )}
 
-          {currentScene.mockupType === "signup" && (
-            <div className="p-6 rounded-2xl bg-surface-100/90 border border-surface-border/80 backdrop-blur-md shadow-2xl space-y-3 animate-fadeIn max-w-lg mx-auto">
-              <div className="flex items-center justify-between border-b border-surface-border pb-2 text-xs font-mono">
-                <span className="text-cyan-400 font-bold">Step 1: Link Free Fire UID</span>
-                <span className="text-emerald-400 font-bold">✓ Verified</span>
-              </div>
-              <div className="p-3 rounded-xl bg-surface-200 border border-surface-border text-left font-mono text-xs space-y-1">
-                <span className="text-gray-400 block text-[10px] uppercase">In-Game Name (IGN)</span>
-                <span className="font-bold text-brand-crimson text-sm block">ALPHA〆KILLER</span>
-                <span className="text-gray-400 block text-[10px] uppercase pt-1">Free Fire UID</span>
-                <span className="font-bold text-white tracking-widest text-sm block">1098234871</span>
-              </div>
-              <span className="text-[10px] font-mono text-gray-400 block">
-                Referees match this verified in-game UID to award match kills & prize rewards.
-              </span>
+            {/* Central Animated Mockup Graphic */}
+            <div className="relative z-10 max-w-xl mx-auto w-full my-auto py-4">
+              {/* Central Play Overlay Button when paused */}
+              {!isPlaying && (
+                <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/40 backdrop-blur-xs rounded-2xl">
+                  <button
+                    onClick={handlePlay}
+                    className="p-5 sm:p-6 rounded-full bg-brand-crimson hover:bg-brand-crimsonDark text-white shadow-2xl shadow-brand-crimson/50 hover:scale-110 active:scale-95 transition-all group border-2 border-white/20"
+                    title="Play Walkthrough"
+                  >
+                    <Play className="w-8 h-8 sm:w-10 sm:h-10 fill-current translate-x-0.5 group-hover:animate-pulse" />
+                  </button>
+                </div>
+              )}
+
+              {/* Scene 1: Welcome & Landing */}
+              {currentScene.mockupType === "home" && (
+                <div className="p-5 sm:p-7 rounded-2xl bg-surface-100/95 border border-surface-border/90 backdrop-blur-md shadow-2xl space-y-3.5 text-center">
+                  <div className="w-12 h-12 rounded-2xl bg-brand-crimson/20 text-brand-crimson border border-brand-crimson/30 flex items-center justify-center mx-auto shadow-lg">
+                    <Trophy className="w-6 h-6" />
+                  </div>
+                  <h4 className="font-display text-lg sm:text-2xl font-black text-white uppercase tracking-tight">
+                    Welcome to ARENEX Arena
+                  </h4>
+                  <p className="text-xs sm:text-sm text-gray-300 font-sans leading-relaxed max-w-md mx-auto">
+                    বাংলাদেশের বিশ্বস্ত ও অটোমেটেড ফ্রি ফায়ার টুর্নামেন্ট হাব। কাস্টম ম্যাচ খেলুন ও নিশ্চিত ক্যাশ প্রাইজ জিতুন।
+                  </p>
+                  <div className="flex flex-wrap items-center justify-center gap-2 pt-1 font-mono text-[10px] sm:text-xs">
+                    <span className="px-2.5 py-1 rounded-lg bg-cyan-500/10 text-cyan-300 border border-cyan-500/30">
+                      ✓ 100% bKash Verification
+                    </span>
+                    <span className="px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-300 border border-emerald-500/30">
+                      ✓ Instant Timed Room Gate
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Scene 2: Signup & In-game UID */}
+              {currentScene.mockupType === "signup" && (
+                <div className="p-5 sm:p-7 rounded-2xl bg-surface-100/95 border border-surface-border/90 backdrop-blur-md shadow-2xl space-y-3 text-center max-w-md mx-auto">
+                  <div className="flex items-center justify-between border-b border-surface-border pb-2 text-xs font-mono">
+                    <span className="text-cyan-400 font-bold flex items-center gap-1.5">
+                      <UserPlus className="w-3.5 h-3.5" />
+                      Player Identity Setup
+                    </span>
+                    <span className="text-emerald-400 font-bold">✓ Profile Linked</span>
+                  </div>
+                  <div className="p-3 rounded-xl bg-surface-200 border border-surface-border text-left font-mono text-xs space-y-1.5">
+                    <div>
+                      <span className="text-gray-400 block text-[10px] uppercase font-bold">Free Fire IGN (নাম)</span>
+                      <span className="font-bold text-brand-crimson text-sm block">ALPHA〆KILLER</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-400 block text-[10px] uppercase font-bold">Free Fire UID</span>
+                      <span className="font-bold text-white tracking-widest text-sm block">1098234871</span>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-mono text-gray-400 block">
+                    রেফারি আপনার এই গেম ইউআইডি দেখে কিল ও পয়েন্ট ট্র্যাক করবেন।
+                  </span>
+                </div>
+              )}
+
+              {/* Scene 3: WhatsApp Community */}
+              {currentScene.mockupType === "whatsapp" && (
+                <div className="p-5 sm:p-7 rounded-2xl bg-surface-100/95 border border-surface-border/90 backdrop-blur-md shadow-2xl space-y-3.5 text-center max-w-md mx-auto">
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center mx-auto">
+                    <MessageCircle className="w-6 h-6" />
+                  </div>
+                  <h4 className="font-display text-base sm:text-lg font-black text-white uppercase">
+                    ARENEX Official WhatsApp Channel
+                  </h4>
+                  <p className="text-xs text-gray-300 font-sans">
+                    ম্যাচ শিডিউল, জরুরি নোটিফিকেশন ও দ্রুত লাইভ সাপোর্টের জন্য আমাদের অফিশিয়াল চ্যানেলে যুক্ত থাকুন।
+                  </p>
+                  <a
+                    href="https://whatsapp.com/channel/0029Vb9GN1zLY6dGJJNXM42f"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-display font-bold text-xs uppercase tracking-wider shadow-lg shadow-emerald-600/30 transition-all"
+                  >
+                    <span>Join WhatsApp Channel</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                </div>
+              )}
+
+              {/* Scene 4: Tournament Selection & Slot Booking */}
+              {currentScene.mockupType === "tournament" && (
+                <div className="p-5 sm:p-7 rounded-2xl bg-surface-100/95 border border-surface-border/90 backdrop-blur-md shadow-2xl space-y-3.5 text-center max-w-lg mx-auto">
+                  <div className="flex items-center justify-between border-b border-surface-border pb-2">
+                    <span className="font-display font-black text-white uppercase text-xs sm:text-sm">
+                      Dhaka Night Battle — Solo Cup
+                    </span>
+                    <span className="px-2 py-0.5 rounded bg-brand-crimson text-white text-[10px] font-mono font-bold">
+                      SOLO BR
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 text-left font-mono text-xs">
+                    <div className="p-2 sm:p-2.5 rounded-lg bg-surface-200 border border-surface-border">
+                      <span className="text-[10px] text-gray-400 uppercase block">Entry Fee</span>
+                      <span className="font-bold text-white text-xs sm:text-sm">৳50.00</span>
+                    </div>
+                    <div className="p-2 sm:p-2.5 rounded-lg bg-surface-200 border border-surface-border">
+                      <span className="text-[10px] text-gray-400 uppercase block">Prize Pool</span>
+                      <span className="font-bold text-amber-400 text-xs sm:text-sm">৳2,000.00</span>
+                    </div>
+                    <div className="p-2 sm:p-2.5 rounded-lg bg-surface-200 border border-surface-border">
+                      <span className="text-[10px] text-gray-400 uppercase block">Slots</span>
+                      <span className="font-bold text-cyan-400 text-xs sm:text-sm">24 / 48</span>
+                    </div>
+                  </div>
+                  <div className="py-2.5 rounded-xl bg-brand-crimson text-white font-display font-bold text-xs uppercase tracking-wider shadow-md">
+                    Claim Spot & Lock Ticket →
+                  </div>
+                </div>
+              )}
+
+              {/* Scene 5: bKash Fee Payment */}
+              {currentScene.mockupType === "payment" && (
+                <div className="p-5 sm:p-7 rounded-2xl bg-surface-100/95 border border-[#e2136e]/50 backdrop-blur-md shadow-2xl space-y-3 max-w-md mx-auto">
+                  <div className="bg-[#e2136e] -mx-5 sm:-mx-7 -mt-5 sm:-mt-7 p-3 rounded-t-2xl flex items-center justify-between text-white font-display font-black text-xs uppercase tracking-wider">
+                    <span>bKash Secure Checkout</span>
+                    <span>Slot #12 Locked</span>
+                  </div>
+                  <div className="p-3 rounded-xl bg-surface-200 border border-surface-border text-left font-mono text-xs space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-400 text-[11px]">Send Money To:</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-bold text-[#e2136e] text-xs sm:text-sm">
+                          {ARENEX_BKASH_RECIPIENT_NUMBER}
+                        </span>
+                        <button
+                          onClick={() => handleCopy(ARENEX_BKASH_RECIPIENT_NUMBER, "bkash")}
+                          className="p-1 rounded bg-surface-100 hover:bg-surface-elevated text-gray-400 hover:text-white"
+                          title="Copy bKash Number"
+                        >
+                          {copiedKey === "bkash" ? (
+                            <Check className="w-3 h-3 text-emerald-400" />
+                          ) : (
+                            <Copy className="w-3 h-3" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-400 text-[11px]">TrxID Submitted:</span>
+                      <span className="font-bold text-cyan-400 text-xs sm:text-sm">BL92A8ZK91</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-400 text-[11px]">Verification:</span>
+                      <span className="font-bold text-emerald-400 text-[10px] uppercase">
+                        ✓ Instant Approved
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Scene 6: Timed Room Decryption Gate */}
+              {currentScene.mockupType === "room" && (
+                <div className="p-5 sm:p-7 rounded-2xl bg-cyan-950/40 border-2 border-cyan-500/50 backdrop-blur-md shadow-2xl space-y-3 max-w-md mx-auto">
+                  <div className="flex items-center justify-between text-cyan-300">
+                    <div className="flex items-center gap-1.5">
+                      <Unlock className="w-4 h-4 text-cyan-400" />
+                      <span className="font-display font-black text-xs uppercase tracking-wider">
+                        Custom Room Unlocked
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-mono text-emerald-400 font-bold">✓ Check-in Verified</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2.5 text-left font-mono">
+                    <div className="p-2.5 sm:p-3 rounded-xl bg-surface-200 border border-surface-border">
+                      <span className="text-[10px] text-gray-400 uppercase block font-bold">Room ID</span>
+                      <span className="font-bold text-white text-base sm:text-lg tracking-wider">ARENEX-8291</span>
+                    </div>
+                    <div className="p-2.5 sm:p-3 rounded-xl bg-surface-200 border border-surface-border">
+                      <span className="text-[10px] text-gray-400 uppercase block font-bold">Password</span>
+                      <span className="font-bold text-cyan-300 text-base sm:text-lg tracking-wider">1234</span>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-mono text-gray-400 block text-center">
+                    ফ্রি ফায়ার খুলে Custom Room এ আইডি ও পাসওয়ার্ড দিয়ে জয়েন করুন।
+                  </span>
+                </div>
+              )}
+
+              {/* Scene 7: Scoring & Cash Payout */}
+              {currentScene.mockupType === "payout" && (
+                <div className="p-5 sm:p-7 rounded-2xl bg-emerald-950/30 border-2 border-emerald-500/40 backdrop-blur-md shadow-2xl space-y-3 text-center max-w-md mx-auto">
+                  <div className="w-12 h-12 rounded-2xl bg-brand-gold/20 text-brand-gold border border-brand-gold/30 flex items-center justify-center mx-auto">
+                    <Trophy className="w-6 h-6" />
+                  </div>
+                  <h4 className="font-display text-lg sm:text-xl font-black text-white uppercase">
+                    Prize Credited to Wallet!
+                  </h4>
+                  <div className="p-3 rounded-xl bg-surface-200 border border-surface-border font-mono text-xs flex items-center justify-between">
+                    <span className="text-gray-400">1st Place + Top Fragger:</span>
+                    <span className="font-bold text-brand-gold text-sm sm:text-base">৳1,500.00 BDT</span>
+                  </div>
+                  <span className="text-[10px] font-mono text-emerald-400 block font-bold">
+                    ✓ সরাসরি আপনার বিকাশ বা নগদ নাম্বারে ক্যাশআউট সম্পন্ন!
+                  </span>
+                </div>
+              )}
             </div>
-          )}
 
-          {currentScene.mockupType === "whatsapp" && (
-            <div className="p-6 rounded-2xl bg-surface-100/90 border border-surface-border/80 backdrop-blur-md shadow-2xl space-y-3 animate-fadeIn max-w-md mx-auto">
-              <div className="w-12 h-12 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center mx-auto">
-                <MessageCircle className="w-6 h-6" />
+            {/* Bottom Subtitles Bar */}
+            <div className="relative z-10 bg-black/85 backdrop-blur-md p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-white/10 space-y-1">
+              <div className="flex items-center justify-between text-[10px] sm:text-xs font-mono text-gray-400">
+                <span className="font-bold text-white flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+                  {currentScene.title}
+                </span>
+                <span className="text-cyan-400 font-bold hidden sm:inline">{currentScene.tagline}</span>
               </div>
-              <h4 className="font-display text-lg font-black text-white uppercase">
-                Join ARENEX Official WhatsApp Channel
-              </h4>
-              <p className="text-xs text-gray-300 font-sans">
-                Get tournament room announcements, schedule alerts, and 24/7 organizer support.
-              </p>
+
+              <div className="text-xs sm:text-sm font-sans font-medium text-slate-100 dark:text-gray-200 text-left leading-relaxed">
+                {currentScene.banglaSubtitles.map((sub, i) => (
+                  <p key={i} className="flex items-start sm:items-center gap-1.5">
+                    <span className="text-brand-crimson font-bold shrink-0">›</span>
+                    <span>{sub}</span>
+                  </p>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Video Timeline Progress Bar */}
+          <div className="w-full bg-surface-200 h-1.5 relative overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-brand-crimson via-cyan-400 to-emerald-400 transition-all duration-100 ease-linear shadow-[0_0_10px_rgba(226,19,110,0.8)]"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+
+          {/* Bottom Video Controls Bar */}
+          <div className="p-3.5 sm:p-5 bg-surface-100 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
+            {/* Play / Pause / Navigation */}
+            <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-between sm:justify-start">
+              <button
+                onClick={() => handleSceneChange(currentSceneIndex - 1)}
+                disabled={currentSceneIndex === 0}
+                className="p-2 sm:p-2.5 rounded-xl bg-surface-200 hover:bg-surface-elevated border border-surface-border text-slate-700 dark:text-gray-300 disabled:opacity-30 transition-all"
+                title="Previous Scene"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+
+              {isPlaying ? (
+                <button
+                  onClick={handlePause}
+                  className="flex-1 sm:flex-none px-5 py-2.5 rounded-xl bg-brand-crimson hover:bg-brand-crimsonDark text-white font-display font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-brand-crimson/30 transition-all active:scale-95"
+                >
+                  <Pause className="w-4 h-4 fill-current" />
+                  <span>Pause Guide</span>
+                </button>
+              ) : (
+                <button
+                  onClick={handlePlay}
+                  className="flex-1 sm:flex-none px-6 py-2.5 rounded-xl bg-brand-crimson hover:bg-brand-crimsonDark text-white font-display font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-brand-crimson/30 transition-all active:scale-95"
+                >
+                  <Play className="w-4 h-4 fill-current" />
+                  <span>Play Walkthrough (ভয়েস সহ)</span>
+                </button>
+              )}
+
+              <button
+                onClick={() => handleSceneChange(currentSceneIndex + 1)}
+                disabled={currentSceneIndex === TUTORIAL_SCENES.length - 1}
+                className="p-2 sm:p-2.5 rounded-xl bg-surface-200 hover:bg-surface-elevated border border-surface-border text-slate-700 dark:text-gray-300 disabled:opacity-30 transition-all"
+                title="Next Scene"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+
+              <button
+                onClick={() => handleSceneChange(0)}
+                className="p-2 sm:p-2.5 rounded-xl bg-surface-200 hover:bg-surface-elevated border border-surface-border text-slate-700 dark:text-gray-300 transition-all"
+                title="Restart Tutorial"
+              >
+                <RotateCcw className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Quick CTA to Action */}
+            <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-between sm:justify-end pt-2 sm:pt-0 border-t sm:border-t-0 border-surface-border">
+              <Link
+                href="/tournaments"
+                className="flex-1 sm:flex-none text-center px-4 py-2 rounded-xl bg-surface-elevated hover:bg-surface-50 border border-surface-border text-slate-800 dark:text-gray-200 font-display font-bold text-xs uppercase tracking-wider transition-all"
+              >
+                Browse Tournaments
+              </Link>
               <a
                 href="https://whatsapp.com/channel/0029Vb9GN1zLY6dGJJNXM42f"
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-display font-bold text-xs uppercase tracking-wider shadow-lg shadow-emerald-600/30 transition-all"
+                className="flex-1 sm:flex-none text-center px-3.5 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 font-display font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all"
               >
-                <span>Join WhatsApp Channel</span>
-                <ExternalLink className="w-3.5 h-3.5" />
+                <MessageCircle className="w-3.5 h-3.5" />
+                <span>WhatsApp Group</span>
               </a>
             </div>
-          )}
-
-          {currentScene.mockupType === "tournament" && (
-            <div className="p-6 rounded-2xl bg-surface-100/90 border border-surface-border/80 backdrop-blur-md shadow-2xl space-y-3 animate-fadeIn max-w-lg mx-auto">
-              <div className="flex items-center justify-between border-b border-surface-border pb-2">
-                <span className="font-display font-black text-white uppercase text-sm">
-                  Dhaka Night Battle — Solo Cup
-                </span>
-                <span className="px-2 py-0.5 rounded bg-brand-crimson text-white text-[10px] font-mono font-bold">
-                  SOLO BR
-                </span>
-              </div>
-              <div className="grid grid-cols-3 gap-2 text-left font-mono text-xs">
-                <div className="p-2.5 rounded-lg bg-surface-200 border border-surface-border">
-                  <span className="text-[10px] text-gray-400 uppercase block">Entry Fee</span>
-                  <span className="font-bold text-white text-sm">৳50.00</span>
-                </div>
-                <div className="p-2.5 rounded-lg bg-surface-200 border border-surface-border">
-                  <span className="text-[10px] text-gray-400 uppercase block">Prize Pool</span>
-                  <span className="font-bold text-amber-400 text-sm">৳2,000.00</span>
-                </div>
-                <div className="p-2.5 rounded-lg bg-surface-200 border border-surface-border">
-                  <span className="text-[10px] text-gray-400 uppercase block">Slots</span>
-                  <span className="font-bold text-cyan-400 text-sm">24 / 48</span>
-                </div>
-              </div>
-              <div className="py-2.5 rounded-xl bg-brand-crimson text-white font-display font-bold text-xs uppercase tracking-wider shadow-md">
-                Claim Spot & Lock Ticket →
-              </div>
-            </div>
-          )}
-
-          {currentScene.mockupType === "payment" && (
-            <div className="p-6 rounded-2xl bg-surface-100/90 border border-[#e2136e]/50 backdrop-blur-md shadow-2xl space-y-3 animate-fadeIn max-w-lg mx-auto">
-              <div className="bg-[#e2136e] -mx-6 -mt-6 p-3 rounded-t-2xl flex items-center justify-between text-white font-display font-black text-xs uppercase tracking-wider">
-                <span>bKash Secure Checkout</span>
-                <span>Slot #12 Locked</span>
-              </div>
-              <div className="p-3 rounded-xl bg-surface-200 border border-surface-border text-left font-mono text-xs space-y-1">
-                <div className="flex justify-between">
-                  <span className="text-gray-400">bKash Number:</span>
-                  <span className="font-bold text-[#e2136e] text-sm">{ARENEX_BKASH_RECIPIENT_NUMBER}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">TrxID Submitted:</span>
-                  <span className="font-bold text-cyan-400 text-sm">BL92A8ZK91</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Status:</span>
-                  <span className="font-bold text-emerald-400 text-[11px] uppercase">Verified (Option B)</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {currentScene.mockupType === "room" && (
-            <div className="p-6 rounded-2xl bg-cyan-950/40 border-2 border-cyan-500/50 backdrop-blur-md shadow-2xl space-y-3 animate-fadeIn max-w-lg mx-auto">
-              <div className="flex items-center justify-between text-cyan-300">
-                <div className="flex items-center gap-1.5">
-                  <Unlock className="w-4 h-4 text-cyan-400" />
-                  <span className="font-display font-black text-xs uppercase tracking-wider">
-                    Custom Room Unlocked
-                  </span>
-                </div>
-                <span className="text-[10px] font-mono text-emerald-400 font-bold">✓ Verified Access</span>
-              </div>
-              <div className="grid grid-cols-2 gap-3 text-left font-mono">
-                <div className="p-3 rounded-xl bg-surface-200 border border-surface-border">
-                  <span className="text-[10px] text-gray-400 uppercase block font-bold">Custom Room ID</span>
-                  <span className="font-bold text-white text-lg tracking-wider">ARENEX-8291</span>
-                </div>
-                <div className="p-3 rounded-xl bg-surface-200 border border-surface-border">
-                  <span className="text-[10px] text-gray-400 uppercase block font-bold">Lobby Password</span>
-                  <span className="font-bold text-cyan-300 text-lg tracking-wider">1234</span>
-                </div>
-              </div>
-              <span className="text-[10px] font-mono text-gray-400 block">
-                Open Free Fire → Custom Match → Search Room ID → Enter Password
-              </span>
-            </div>
-          )}
-
-          {currentScene.mockupType === "payout" && (
-            <div className="p-6 rounded-2xl bg-emerald-950/30 border-2 border-emerald-500/40 backdrop-blur-md shadow-2xl space-y-3 animate-fadeIn max-w-lg mx-auto">
-              <div className="w-12 h-12 rounded-xl bg-brand-gold/20 text-brand-gold border border-brand-gold/30 flex items-center justify-center mx-auto">
-                <Trophy className="w-6 h-6" />
-              </div>
-              <h4 className="font-display text-xl font-black text-white uppercase">
-                Prize Credited to Your Wallet!
-              </h4>
-              <div className="p-3 rounded-xl bg-surface-200 border border-surface-border font-mono text-xs flex items-center justify-between">
-                <span className="text-gray-400">1st Place + Top Fragger:</span>
-                <span className="font-bold text-brand-gold text-base">৳1,500.00 BDT</span>
-              </div>
-              <span className="text-[10px] font-mono text-emerald-400 block font-bold">
-                ✓ Disbursed directly to your registered bKash Number
-              </span>
-            </div>
-          )}
-        </div>
-
-        {/* Bottom Subtitles Bar */}
-        <div className="relative z-10 bg-black/80 backdrop-blur-md p-3 sm:p-4 rounded-2xl border border-white/10 space-y-1.5">
-          <div className="flex items-center justify-between text-[11px] font-mono text-gray-400">
-            <span className="font-bold text-white flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
-              {currentScene.title}
-            </span>
-            <span className="text-cyan-400 font-bold">{currentScene.tagline}</span>
           </div>
-
-          <div className="text-xs sm:text-sm font-sans font-medium text-slate-100 dark:text-gray-200 text-left leading-relaxed">
-            {currentScene.banglaSubtitles.map((sub, i) => (
-              <p key={i} className="flex items-center gap-1.5">
-                <span className="text-brand-crimson font-bold">›</span>
-                <span>{sub}</span>
-              </p>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Video Progress Bar */}
-      <div className="w-full bg-surface-200 h-1.5 relative overflow-hidden">
-        <div
-          className="h-full bg-gradient-to-r from-brand-crimson via-cyan-400 to-emerald-400 transition-all duration-100 ease-linear shadow-[0_0_8px_rgba(226,19,110,0.8)]"
-          style={{ width: `${progress}%` }}
-        />
-      </div>
-
-      {/* Video Controls Bar */}
-      <div className="p-4 sm:p-5 bg-surface-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-        {/* Play / Pause / Navigation */}
-        <div className="flex items-center gap-3 w-full sm:w-auto justify-center sm:justify-start">
-          <button
-            onClick={() => handleSceneChange(currentSceneIndex - 1)}
-            disabled={currentSceneIndex === 0}
-            className="p-2.5 rounded-xl bg-surface-200 hover:bg-surface-elevated border border-surface-border text-slate-700 dark:text-gray-300 disabled:opacity-30 transition-all"
-            title="Previous Scene"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-
-          {isPlaying ? (
-            <button
-              onClick={handlePause}
-              className="px-5 py-2.5 rounded-xl bg-brand-crimson hover:bg-brand-crimsonDark text-white font-display font-black text-xs uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-brand-crimson/30 transition-all active:scale-95"
-            >
-              <Pause className="w-4 h-4 fill-current" />
-              <span>Pause Guide</span>
-            </button>
+        </>
+      ) : (
+        /* Full MP4 Video Player View */
+        <div className="p-4 sm:p-8 space-y-4 text-center">
+          {externalVideoUrl ? (
+            <div className="aspect-video rounded-2xl overflow-hidden bg-black border border-surface-border shadow-2xl">
+              <iframe
+                src={externalVideoUrl}
+                className="w-full h-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
           ) : (
-            <button
-              onClick={handlePlay}
-              className="px-6 py-2.5 rounded-xl bg-brand-crimson hover:bg-brand-crimsonDark text-white font-display font-black text-xs uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-brand-crimson/30 transition-all active:scale-95"
-            >
-              <Play className="w-4 h-4 fill-current" />
-              <span>Play Video Guide (বাংলা ভয়েস)</span>
-            </button>
+            <div className="min-h-[360px] rounded-2xl bg-surface-200/70 border-2 border-dashed border-surface-border flex flex-col items-center justify-center p-6 space-y-4">
+              <div className="w-16 h-16 rounded-3xl bg-brand-crimson/15 text-brand-crimson border border-brand-crimson/30 flex items-center justify-center shadow-lg">
+                <Video className="w-8 h-8" />
+              </div>
+              <div className="space-y-1 max-w-md">
+                <h4 className="font-display text-lg font-black text-slate-900 dark:text-white uppercase">
+                  MP4 Video Walkthrough
+                </h4>
+                <p className="text-xs text-slate-600 dark:text-gray-400 font-sans">
+                  আপনি ElevenLabs 'Bunty' ভয়েস ও স্ক্রিন রেকর্ড দিয়ে ভিডিও রেন্ডার করে{" "}
+                  <code className="px-1.5 py-0.5 rounded bg-surface-100 text-brand-crimson font-mono text-[11px]">
+                    /public/videos/arenex-tutorial.mp4
+                  </code>{" "}
+                  ফাইলে রাখলে বা ইউটিউব লিংক দিলে এখানে সরাসরি প্লে হবে।
+                </p>
+              </div>
+              <button
+                onClick={() => setActiveTab("simulator")}
+                className="px-5 py-2.5 rounded-xl bg-brand-crimson hover:bg-brand-crimsonDark text-white font-display font-bold text-xs uppercase tracking-wider shadow-lg shadow-brand-crimson/30 flex items-center gap-2"
+              >
+                <Sparkles className="w-4 h-4" />
+                <span>সরাসরি সিমুলেটর দেখুন</span>
+              </button>
+            </div>
           )}
-
-          <button
-            onClick={() => handleSceneChange(currentSceneIndex + 1)}
-            disabled={currentSceneIndex === TUTORIAL_SCENES.length - 1}
-            className="p-2.5 rounded-xl bg-surface-200 hover:bg-surface-elevated border border-surface-border text-slate-700 dark:text-gray-300 disabled:opacity-30 transition-all"
-            title="Next Scene"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </button>
-
-          <button
-            onClick={() => handleSceneChange(0)}
-            className="p-2.5 rounded-xl bg-surface-200 hover:bg-surface-elevated border border-surface-border text-slate-700 dark:text-gray-300 transition-all"
-            title="Restart Tutorial"
-          >
-            <RotateCcw className="w-4 h-4" />
-          </button>
         </div>
-
-        {/* Quick CTA to Action */}
-        <div className="flex items-center gap-3 w-full sm:w-auto justify-center sm:justify-end">
-          <Link
-            href="/tournaments"
-            className="px-5 py-2.5 rounded-xl bg-surface-elevated hover:bg-surface-50 border border-surface-border text-slate-800 dark:text-gray-200 font-display font-bold text-xs uppercase tracking-wider transition-all"
-          >
-            Browse Tournaments
-          </Link>
-          <a
-            href="https://whatsapp.com/channel/0029Vb9GN1zLY6dGJJNXM42f"
-            target="_blank"
-            rel="noreferrer"
-            className="px-4 py-2.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 font-display font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 transition-all"
-          >
-            <MessageCircle className="w-3.5 h-3.5" />
-            <span>WhatsApp Community</span>
-          </a>
-        </div>
-      </div>
+      )}
     </div>
   );
 }
