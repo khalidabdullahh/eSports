@@ -20,6 +20,7 @@ import {
   Swords,
   Flame,
 } from "lucide-react";
+import { VideoTutorialPlayer } from "@/components/video-tutorial-player";
 
 export const metadata = {
   title: "How It Works & Tournament Architecture — ARENEX",
@@ -182,6 +183,20 @@ export default function HowItWorksPage() {
           A transparent, 5-stage tournament lifecycle engineered for competitive mobile esports — from slot reservation and room key decryption to live referee telemetry and instant financial disbursements.
         </p>
       </div>
+
+      {/* Interactive Bangla Video Tutorial Simulator */}
+      <section className="space-y-4">
+        <div className="border-l-2 border-cyan-400 pl-4">
+          <span className="text-xs font-mono font-semibold text-cyan-400 uppercase tracking-wider block">
+            INTERACTIVE VIDEO WALKTHROUGH & AUDIO GUIDE
+          </span>
+          <h2 className="font-display text-2xl sm:text-3xl font-black text-slate-900 dark:text-white uppercase mt-0.5">
+            ভিডিও টিউটোরিয়াল ও সিমুলেটর
+          </h2>
+        </div>
+
+        <VideoTutorialPlayer />
+      </section>
 
       {/* 5-Step Operational Pipeline */}
       <section className="space-y-6">

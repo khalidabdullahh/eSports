@@ -74,6 +74,13 @@ export default async function HomePage() {
                   <Radio className="w-4 h-4 text-brand-crimson animate-pulse" />
                   Watch Live
                 </Link>
+                <Link
+                  href="/how-it-works"
+                  className="px-5 py-3.5 rounded-xl bg-surface-200 hover:bg-surface-50 text-slate-800 dark:text-gray-300 hover:text-cyan-400 border border-surface-border font-display font-bold text-sm tracking-wider uppercase transition-all flex items-center gap-2"
+                >
+                  <Sparkles className="w-4 h-4 text-amber-400" />
+                  ভিডিও গাইড
+                </Link>
               </div>
 
               {/* Brand Stats Row */}
