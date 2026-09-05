@@ -41,6 +41,16 @@ export default function TournamentRegisterPage() {
   const [isPending, startTransition] = useTransition();
   const [registeredSlot, setRegisteredSlot] = useState<number | null>(null);
   const [registeredId, setRegisteredId] = useState<string | null>(null);
+  const [submittedPayment, setSubmittedPayment] = useState<{
+    id?: string;
+    transaction_id: string;
+    sender_phone?: string | null;
+    payment_method: string;
+    amount_cents: number;
+    currency: string;
+    status: string;
+    created_at?: string;
+  } | null>(null);
 
   // Dynamic tournament & profile state
   const [tournament, setTournament] = useState<{
@@ -89,13 +99,13 @@ export default function TournamentRegisterPage() {
         });
       }
 
-      // 2. Fetch User, Game Account, and Existing Registration
+      // 2. Fetch User, Game Account, Existing Registration, and Payment
       const {
         data: { user },
       } = await supabase.auth.getUser();
 
       if (user) {
-        const [profRes, gameRes, regRes] = await Promise.all([
+        const [profRes, gameRes, regRes, payRes] = await Promise.all([
           supabase.from("profiles").select("display_name").eq("id", user.id).maybeSingle(),
           supabase.from("game_accounts").select("in_game_name, game_uid").eq("user_id", user.id).limit(1).maybeSingle(),
           supabase
@@ -104,6 +114,14 @@ export default function TournamentRegisterPage() {
             .eq("tournament_id", tournamentId)
             .eq("user_id", user.id)
             .maybeSingle(),
+          supabase
+            .from("payments")
+            .select("*")
+            .eq("tournament_id", tournamentId)
+            .eq("user_id", user.id)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle(),
         ]);
 
         setPlayerIdentity({
@@ -111,6 +129,17 @@ export default function TournamentRegisterPage() {
           inGameName: gameRes.data?.in_game_name || "ALPHA〆KILLER",
           gameUid: gameRes.data?.game_uid || "1098234871",
         });
+
+        if (payRes.data) {
+          setSubmittedPayment(payRes.data);
+          setTransactionId(payRes.data.transaction_id || "");
+          if (payRes.data.sender_phone) {
+            setSenderPhone(payRes.data.sender_phone);
+          }
+          if (payRes.data.payment_method) {
+            setPaymentMethod(payRes.data.payment_method as any);
+          }
+        }
 
         if (regRes.data) {
           setRegisteredSlot(regRes.data.slot_number);
@@ -183,6 +212,9 @@ export default function TournamentRegisterPage() {
         return;
       }
 
+      if (res.payment) {
+        setSubmittedPayment(res.payment);
+      }
       setStep("confirmed");
     });
   };
@@ -397,7 +429,7 @@ export default function TournamentRegisterPage() {
           </form>
         )}
 
-        {/* STEP 3: SUBMITTED CONFIRMATION & ROOM OPTION B */}
+        {/* STEP 3: SUBMITTED CONFIRMATION & DETAILS TICKET */}
         {step === "confirmed" && (
           <div className="space-y-6 text-center py-4 animate-fadeIn">
             <div className="w-16 h-16 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center justify-center mx-auto shadow-xl">
@@ -414,23 +446,66 @@ export default function TournamentRegisterPage() {
               <p className="text-xs text-slate-600 dark:text-gray-300 font-sans max-w-md mx-auto leading-relaxed">
                 {isFreeCup
                   ? "Your free entry spot is locked. Head to the tournament room when check-in opens."
-                  : `Your transaction ID (${transactionId || "SUBMITTED"}) has been queued for Super Admin review. Per ARENEX Option B security policy, custom match room credentials unlock automatically once verified.`}
+                  : "Your transaction details have been submitted and are pending Super Admin verification. Once approved, your custom match room credentials unlock automatically at the scheduled match time."}
               </p>
             </div>
 
-            <div className="p-4 rounded-2xl bg-surface-200 border border-surface-border max-w-md mx-auto text-left text-xs font-mono space-y-2">
-              <div className="flex justify-between">
+            {/* Comprehensive Ticket Details */}
+            <div className="p-5 rounded-2xl bg-surface-200 border border-surface-border max-w-lg mx-auto text-left text-xs font-mono space-y-3 shadow-inner">
+              <div className="flex items-center justify-between pb-2 border-b border-surface-border/70">
                 <span className="text-slate-500 dark:text-gray-400">Tournament:</span>
                 <span className="font-bold text-slate-900 dark:text-white">{tournament?.title}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500 dark:text-gray-400">Confirmed Slot:</span>
+              <div className="flex items-center justify-between pb-2 border-b border-surface-border/70">
+                <span className="text-slate-500 dark:text-gray-400">Allocated Slot:</span>
                 <span className="font-bold text-amber-400">#{registeredSlot || 1}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500 dark:text-gray-400">Room Status:</span>
-                <span className="font-bold text-emerald-400">
-                  {isFreeCup ? "Eligible for Check-In" : "Pending Admin Approval (Option B)"}
+              <div className="flex items-center justify-between pb-2 border-b border-surface-border/70">
+                <span className="text-slate-500 dark:text-gray-400">Verified Player:</span>
+                <span className="font-bold text-brand-crimson">
+                  {playerIdentity.inGameName} ({playerIdentity.gameUid})
+                </span>
+              </div>
+              {!isFreeCup && (
+                <>
+                  <div className="flex items-center justify-between pb-2 border-b border-surface-border/70">
+                    <span className="text-slate-500 dark:text-gray-400">Transaction ID (TrxID):</span>
+                    <span className="font-bold font-mono text-cyan-400 bg-surface-100 px-2 py-0.5 rounded border border-surface-border">
+                      {submittedPayment?.transaction_id || transactionId || "SUBMITTED"}
+                    </span>
+                  </div>
+                  {(submittedPayment?.sender_phone || senderPhone) && (
+                    <div className="flex items-center justify-between pb-2 border-b border-surface-border/70">
+                      <span className="text-slate-500 dark:text-gray-400">Sender Number:</span>
+                      <span className="font-bold text-slate-900 dark:text-white">
+                        {submittedPayment?.sender_phone || senderPhone}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between pb-2 border-b border-surface-border/70">
+                    <span className="text-slate-500 dark:text-gray-400">Payment Method:</span>
+                    <span className="font-bold uppercase text-slate-900 dark:text-white">
+                      {submittedPayment?.payment_method || paymentMethod}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between pb-2 border-b border-surface-border/70">
+                    <span className="text-slate-500 dark:text-gray-400">Entry Ticket Amount:</span>
+                    <span className="font-bold text-emerald-400">
+                      {formatCurrency(submittedPayment?.amount_cents || entryFeeCents, currency)}
+                    </span>
+                  </div>
+                </>
+              )}
+              <div className="flex items-center justify-between pt-1">
+                <span className="text-slate-500 dark:text-gray-400">Verification Status:</span>
+                <span className={`font-bold uppercase px-2 py-0.5 rounded text-[10px] ${
+                  submittedPayment?.status === "VERIFIED"
+                    ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                    : isFreeCup
+                    ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                    : "bg-amber-500/15 text-amber-400 border border-amber-500/30"
+                }`}>
+                  {submittedPayment?.status === "VERIFIED" || isFreeCup ? "Approved / Confirmed" : "Under Super Admin Review (Option B)"}
                 </span>
               </div>
             </div>
@@ -438,9 +513,10 @@ export default function TournamentRegisterPage() {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
               <Link
                 href={`/tournaments/${tournamentId}/room`}
-                className="w-full sm:w-auto px-6 py-3 rounded-xl bg-brand-crimson hover:bg-brand-crimsonDark text-white font-display font-bold text-xs uppercase tracking-wider shadow-lg shadow-brand-crimson/25 transition-all"
+                className="w-full sm:w-auto px-6 py-3 rounded-xl bg-brand-crimson hover:bg-brand-crimsonDark text-white font-display font-bold text-xs uppercase tracking-wider shadow-lg shadow-brand-crimson/25 transition-all flex items-center justify-center gap-2"
               >
-                Go to Match Room
+                <Lock className="w-3.5 h-3.5" />
+                <span>Go to Match Room Gate</span>
               </Link>
               <Link
                 href="/dashboard"

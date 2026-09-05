@@ -32,6 +32,8 @@ export default async function AdminDashboardPage() {
       aRes,
       mRes,
       profRes,
+      rcRes,
+      gRes,
     ] = await Promise.all([
       supabase.from("tournaments").select("*").order("created_at", { ascending: false }),
       supabase.from("payments").select("*").order("created_at", { ascending: false }),
@@ -41,17 +43,31 @@ export default async function AdminDashboardPage() {
       supabase.from("audit_logs").select("*").order("created_at", { ascending: false }).limit(50),
       supabase.from("matches").select("*").order("created_at", { ascending: false }).limit(10),
       supabase.from("profiles").select("id, display_name, username, email, free_fire_uid, in_game_name"),
+      supabase.from("room_credentials").select("*"),
+      supabase.from("game_accounts").select("user_id, in_game_name, game_uid"),
     ]);
 
     const profileMap = new Map((profRes.data || []).map((p: any) => [p.id, p]));
     const tourMap = new Map((tRes.data || []).map((t: any) => [t.id, t]));
+    const credMap = new Map((rcRes.data || []).map((rc: any) => [rc.tournament_id, rc]));
+    const gameMap = new Map((gRes.data || []).map((g: any) => [g.user_id, g]));
 
-    tournaments = tRes.data || [];
+    tournaments = (tRes.data || []).map((t: any) => {
+      const cred = credMap.get(t.id);
+      return {
+        ...t,
+        room_credentials: cred ? [cred] : [],
+      };
+    });
+
     payments = (pRes.data || []).map((p: any) => {
       const userProf = profileMap.get(p.user_id);
       const tour = tourMap.get(p.tournament_id);
+      const gameAcc = gameMap.get(p.user_id);
       return {
         ...p,
+        in_game_name: gameAcc?.in_game_name || "ALPHA〆KILLER",
+        free_fire_uid: gameAcc?.game_uid || "1098234871",
         user: userProf || {
           display_name: userProf?.display_name || userProf?.username || "Warrior",
           username: userProf?.username || "player",
@@ -87,7 +103,12 @@ export default async function AdminDashboardPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 pb-32 sm:pb-24 space-y-8 animate-admin-portal">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 pb-32 sm:pb-24 space-y-8 animate-admin-portal relative">
+      {/* Tactical Top Scanline Accent */}
+      <div className="absolute top-0 left-4 right-4 h-[2px] bg-gradient-to-r from-transparent via-brand-crimson to-transparent overflow-hidden rounded-full shadow-[0_0_12px_rgba(226,19,110,0.8)]">
+        <div className="w-1/3 h-full bg-cyan-400 animate-scanline" />
+      </div>
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-surface-border">
         <div>

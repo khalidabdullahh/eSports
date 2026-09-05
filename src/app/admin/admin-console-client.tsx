@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useTransition } from "react";
+import React, { useState, useEffect, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -100,6 +100,36 @@ export function AdminConsoleClient({
     setNotification({ type, msg });
     setTimeout(() => setNotification(null), 4000);
   };
+
+  // Sync selected tournament data dynamically
+  useEffect(() => {
+    const tour = tournaments.find((t) => t.id === selectedTourId) || tournaments[0];
+    if (tour) {
+      setStreamUrl(tour.stream_url || "");
+      setStreamPlatform(tour.stream_platform || "facebook");
+      const rc = (tour.room_credentials as any)?.[0];
+      if (rc) {
+        setRoomName(rc.room_name || "");
+        setRoomPass(rc.room_password || "");
+        if (rc.release_at) {
+          try {
+            setRoomReleaseTime(new Date(rc.release_at).toISOString().slice(0, 16));
+          } catch {
+            // fallback
+          }
+        }
+      } else {
+        setRoomName(`ARENEX-${(tour.slug || tour.id).slice(0, 8).toUpperCase()}`);
+        setRoomPass("1234");
+        const defaultTime = tour.registration_close_at || tour.scheduled_start_at || new Date().toISOString();
+        try {
+          setRoomReleaseTime(new Date(defaultTime).toISOString().slice(0, 16));
+        } catch {
+          // fallback
+        }
+      }
+    }
+  }, [selectedTourId, tournaments]);
 
   // Active Tournament & Metrics
   const selectedTournament = tournaments.find((t) => t.id === selectedTourId) || tournaments[0];
@@ -240,6 +270,22 @@ export function AdminConsoleClient({
       );
       if (res.success) {
         showNotification("success", "Room credentials stored & release gate configured!");
+        setTournaments((prev) =>
+          prev.map((t) =>
+            t.id === selectedTourId
+              ? {
+                  ...t,
+                  room_credentials: [
+                    {
+                      room_name: roomName,
+                      room_password: roomPass,
+                      release_at: new Date(roomReleaseTime).toISOString(),
+                    },
+                  ],
+                }
+              : t
+          )
+        );
         router.refresh();
       } else {
         showNotification("error", res.error || "Failed to update room credentials");

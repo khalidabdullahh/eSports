@@ -17,20 +17,25 @@ export default async function PaymentManagementPage() {
   if (isSupabaseConfigured) {
     const supabase = await createClient();
 
-    const [pRes, profRes, tRes] = await Promise.all([
+    const [pRes, profRes, tRes, gRes] = await Promise.all([
       supabase.from("payments").select("*").order("created_at", { ascending: false }),
       supabase.from("profiles").select("id, display_name, username, email"),
       supabase.from("tournaments").select("id, title, entry_fee_cents, currency"),
+      supabase.from("game_accounts").select("user_id, in_game_name, game_uid"),
     ]);
 
     const profileMap = new Map((profRes.data || []).map((p: any) => [p.id, p]));
     const tourMap = new Map((tRes.data || []).map((t: any) => [t.id, t]));
+    const gameMap = new Map((gRes.data || []).map((g: any) => [g.user_id, g]));
 
     payments = (pRes.data || []).map((p: any) => {
       const userProf = profileMap.get(p.user_id);
       const tour = tourMap.get(p.tournament_id);
+      const gameAcc = gameMap.get(p.user_id);
       return {
         ...p,
+        in_game_name: gameAcc?.in_game_name || "ALPHA〆KILLER",
+        free_fire_uid: gameAcc?.game_uid || "1098234871",
         user: userProf || {
           display_name: "Player",
           username: "player",
@@ -46,7 +51,12 @@ export default async function PaymentManagementPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-32 sm:pb-24 space-y-6 animate-admin-portal">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-32 sm:pb-24 space-y-6 animate-admin-portal relative">
+      {/* Tactical Top Scanline Accent */}
+      <div className="absolute top-0 left-4 right-4 h-[2px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent overflow-hidden rounded-full shadow-[0_0_12px_rgba(6,182,212,0.8)]">
+        <div className="w-1/3 h-full bg-brand-crimson animate-scanline" />
+      </div>
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-surface-border">
         <div>

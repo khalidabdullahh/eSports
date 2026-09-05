@@ -193,9 +193,17 @@ export interface TeamMember {
 export interface Payment {
   id: string;
   tournament_id: string;
+  tournament?: {
+    id?: string;
+    title: string;
+    entry_fee_cents?: number;
+    currency?: string;
+  };
   registration_id: string;
   user_id: string;
   user?: Profile;
+  in_game_name?: string;
+  free_fire_uid?: string;
   amount_cents: number;
   currency: string;
   payment_method: PaymentMethod;
@@ -207,6 +215,7 @@ export interface Payment {
   verified_at?: string;
   rejection_reason?: string;
   submitted_at: string;
+  created_at?: string;
 }
 
 export interface FinancialLedgerEntry {

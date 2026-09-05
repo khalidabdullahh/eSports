@@ -409,6 +409,16 @@ export async function updateRoomCredentialsAction(
         return { success: false, error: upsertErr.message };
       }
 
+      // Synchronize matches custom_room_id and custom_room_password
+      await supabase
+        .from("matches")
+        .update({
+          custom_room_id: roomName.trim(),
+          custom_room_password: roomPassword.trim(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("tournament_id", tournamentId);
+
       await supabase.from("audit_logs").insert({
         actor_id: authUser.id,
         action: "SET_ROOM_CREDENTIALS",
@@ -418,7 +428,10 @@ export async function updateRoomCredentialsAction(
       });
 
       revalidatePath(`/tournaments/${tournamentId}/room`);
+      revalidatePath(`/tournaments/${tournamentId}`);
+      revalidatePath(`/admin/referee/${tournamentId}`);
       revalidatePath("/admin");
+      revalidatePath("/live");
       return { success: true };
     }
 
@@ -430,7 +443,10 @@ export async function updateRoomCredentialsAction(
         releaseAt || new Date().toISOString()
       );
       revalidatePath(`/tournaments/${tournamentId}/room`);
+      revalidatePath(`/tournaments/${tournamentId}`);
+      revalidatePath(`/admin/referee/${tournamentId}`);
       revalidatePath("/admin");
+      revalidatePath("/live");
       return { success: true };
     }
 

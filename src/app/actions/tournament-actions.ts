@@ -514,7 +514,7 @@ export async function checkInPlayerAction(registrationId: string) {
 }
 
 /**
- * Retrieves cryptographic room credentials strictly for checked-in players after release time
+ * Retrieves cryptographic room credentials strictly for checked-in or verified players after release time
  */
 export async function getRoomCredentialAction(tournamentId: string) {
   try {
@@ -524,21 +524,70 @@ export async function getRoomCredentialAction(tournamentId: string) {
     } = await supabase.auth.getUser();
 
     if (authUser && isSupabaseConfigured) {
-      const { data: credRow, error } = await supabase
+      // 1. Check user profile for staff role bypass
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", authUser.id)
+        .maybeSingle();
+
+      const isStaff =
+        profile?.role === "SUPER_ADMIN" ||
+        profile?.role === "OWNER" ||
+        profile?.role === "TOURNAMENT_ADMIN" ||
+        profile?.role === "REFEREE";
+
+      // 2. Fetch room credentials from database
+      const { data: credRow, error: credError } = await supabase
         .from("room_credentials")
         .select("room_name, room_password, release_at")
         .eq("tournament_id", tournamentId)
-        .single();
+        .maybeSingle();
 
-      if (error || !credRow) {
+      if (credError || !credRow) {
         return {
           success: false,
-          error: "Room credentials are not yet released or you are not an eligible checked-in participant.",
+          isLocked: true,
+          error: "Room credentials have not been configured yet for this tournament.",
         };
+      }
+
+      // 3. If not staff, enforce registration approval and timed release check
+      if (!isStaff) {
+        const { data: regRow } = await supabase
+          .from("tournament_registrations")
+          .select("id, status")
+          .eq("tournament_id", tournamentId)
+          .eq("user_id", authUser.id)
+          .maybeSingle();
+
+        if (
+          !regRow ||
+          (regRow.status !== "APPROVED" && regRow.status !== "CHECKED_IN")
+        ) {
+          return {
+            success: false,
+            isLocked: true,
+            error:
+              "You must have an approved or checked-in registration for this tournament to view custom room credentials.",
+          };
+        }
+
+        const now = new Date();
+        const releaseTime = new Date(credRow.release_at);
+        if (now < releaseTime) {
+          return {
+            success: false,
+            isLocked: true,
+            release_at: credRow.release_at,
+            error: `Room credentials will automatically decrypt at ${releaseTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}.`,
+          };
+        }
       }
 
       return {
         success: true,
+        isLocked: false,
         credential: {
           id: `cred-${tournamentId}`,
           tournament_id: tournamentId,
@@ -552,7 +601,7 @@ export async function getRoomCredentialAction(tournamentId: string) {
     if (!isProduction && !isSupabaseConfigured) {
       const userId = dataStore.getCurrentUserId();
       const cred = dataStore.getRoomCredential(tournamentId, userId);
-      return { success: true, credential: cred };
+      return { success: true, isLocked: false, credential: cred };
     }
 
     return { success: false, error: "Room credentials inaccessible." };

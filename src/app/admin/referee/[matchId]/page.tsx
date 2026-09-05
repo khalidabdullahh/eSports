@@ -158,21 +158,38 @@ export default async function RefereePage({
   }));
 
   if (participants.length === 0 && matchRow.tournament_id) {
-    const { data: approvedRegs } = await supabase
+    const { data: allRegs } = await supabase
       .from("tournament_registrations")
-      .select("*, user:profiles(display_name, avatar_url, username)")
+      .select("*, user:profiles(display_name, avatar_url, username, free_fire_uid, in_game_name)")
       .eq("tournament_id", matchRow.tournament_id)
-      .eq("status", "APPROVED");
+      .in("status", ["APPROVED", "CHECKED_IN", "PAYMENT_SUBMITTED", "PENDING_PAYMENT"]);
 
-    if (approvedRegs && approvedRegs.length > 0) {
-      participants = approvedRegs.map((reg: any, index: number) => ({
+    if (allRegs && allRegs.length > 0) {
+      participants = allRegs.map((reg: any, index: number) => ({
         id: `part-${reg.id}`,
         match_id: matchRow.id,
         registration_id: reg.id,
         user_id: reg.user_id,
-        participant_name: reg.in_game_name || reg.user?.display_name || reg.user?.username || `Warrior #${index + 1}`,
-        free_fire_uid: reg.in_game_uid || "1098234871",
+        participant_name: reg.in_game_name || reg.user?.in_game_name || reg.user?.display_name || reg.user?.username || `Warrior #${index + 1}`,
+        free_fire_uid: reg.in_game_uid || reg.user?.free_fire_uid || "1098234871",
         avatar_url: reg.user?.avatar_url || "",
+        kills: 0,
+        placement: 0,
+        placement_points: 0,
+        kill_points: 0,
+        total_score: 0,
+        is_alive: true,
+      }));
+    } else {
+      // Provision default competitor slots so referee can score and test immediately
+      participants = Array.from({ length: 12 }, (_, i) => ({
+        id: `part-${matchRow.id}-slot-${i + 1}`,
+        match_id: matchRow.id,
+        registration_id: `reg-mock-${i + 1}`,
+        user_id: `user-mock-${i + 1}`,
+        participant_name: `Warrior #${i + 1}`,
+        free_fire_uid: `109847291${i}`,
+        avatar_url: "",
         kills: 0,
         placement: 0,
         placement_points: 0,
@@ -228,7 +245,12 @@ export default async function RefereePage({
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-32 sm:pb-24 space-y-6 animate-admin-portal">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-32 sm:pb-24 space-y-6 animate-admin-portal relative">
+      {/* Tactical Top Scanline Accent */}
+      <div className="absolute top-0 left-4 right-4 h-[2px] bg-gradient-to-r from-transparent via-brand-crimson to-transparent overflow-hidden rounded-full shadow-[0_0_12px_rgba(226,19,110,0.8)]">
+        <div className="w-1/3 h-full bg-cyan-400 animate-scanline" />
+      </div>
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-surface-border">
         <div>

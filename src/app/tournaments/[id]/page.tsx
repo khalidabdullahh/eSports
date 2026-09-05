@@ -167,12 +167,29 @@ export default async function TournamentDetailPage({
                       <Lock className="w-4 h-4" />
                       Enter Match Room Gate
                     </Link>
+                  ) : userRegistration.status === "PAYMENT_SUBMITTED" ? (
+                    <div className="space-y-2">
+                      <Link
+                        href={`/tournaments/${tournament.id}/register`}
+                        className="w-full py-2.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 border border-amber-500/30 font-display font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-sm"
+                      >
+                        <Clock className="w-4 h-4" />
+                        <span>View Payment Status</span>
+                      </Link>
+                      <Link
+                        href={`/tournaments/${tournament.id}/room`}
+                        className="w-full py-2.5 rounded-lg bg-surface-elevated hover:bg-surface-50 border border-surface-border text-slate-700 dark:text-gray-200 font-display font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all"
+                      >
+                        <Lock className="w-4 h-4" />
+                        <span>Go to Match Room Gate</span>
+                      </Link>
+                    </div>
                   ) : (
                     <Link
                       href={`/tournaments/${tournament.id}/register`}
                       className="w-full py-2.5 rounded-lg bg-brand-crimson hover:bg-brand-crimsonDark text-white font-display font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-md shadow-brand-crimson/25"
                     >
-                      <span>{userRegistration.status === "PAYMENT_SUBMITTED" ? "View Payment Status" : "Complete bKash Payment"}</span>
+                      <span>Complete bKash Payment</span>
                     </Link>
                   )}
                 </div>

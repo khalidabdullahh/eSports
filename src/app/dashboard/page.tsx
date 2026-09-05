@@ -311,6 +311,23 @@ export default async function PlayerDashboardPage() {
                               <Unlock className="w-3 h-3" />
                               <span>Room Gate</span>
                             </Link>
+                          ) : reg.status === "PAYMENT_SUBMITTED" ? (
+                            <>
+                              <Link
+                                href={`/tournaments/${tourId}/register`}
+                                className="px-3 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 dark:text-amber-400 border border-amber-500/30 flex items-center gap-1 font-bold uppercase transition-all text-[11px]"
+                              >
+                                <Clock className="w-3 h-3" />
+                                <span>Verifying TrxID</span>
+                              </Link>
+                              <Link
+                                href={`/tournaments/${tourId}/room`}
+                                className="px-3 py-1.5 rounded-lg bg-surface-elevated hover:bg-surface-50 border border-surface-border text-slate-700 dark:text-gray-300 flex items-center gap-1 font-bold uppercase transition-colors text-[11px]"
+                              >
+                                <Lock className="w-3 h-3" />
+                                <span>Room Gate</span>
+                              </Link>
+                            </>
                           ) : (
                             <Link
                               href={`/tournaments/${tourId}/register`}
