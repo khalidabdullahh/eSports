@@ -196,6 +196,37 @@ export default async function RefereePage({
 
   const events = evRows || [];
 
+  const defaultPlacementPoints: Record<number, number> = {
+    1: 12,
+    2: 9,
+    3: 8,
+    4: 7,
+    5: 6,
+    6: 5,
+    7: 4,
+    8: 3,
+    9: 2,
+    10: 1,
+  };
+
+  const { data: tourRules } = await supabase
+    .from("tournament_rules")
+    .select("*")
+    .eq("tournament_id", matchRow.tournament_id)
+    .maybeSingle();
+
+  const formattedTournament = {
+    ...matchRow.tournaments,
+    scoring_rules: {
+      kill_points: tourRules?.kill_points ?? 1,
+      placement_points: tourRules?.placement_points ?? defaultPlacementPoints,
+    },
+    prize_distribution_rules: tourRules?.prize_distribution ?? [
+      { place: 1, label: "1st Place (Champion)", amount_cents: matchRow.tournaments.main_prize_pool_cents || 100000 },
+    ],
+    performance_reward_rules: tourRules?.performance_rules ?? [],
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-32 sm:pb-24 space-y-6 animate-admin-portal">
       {/* Header */}
@@ -230,7 +261,7 @@ export default async function RefereePage({
       </div>
 
       <RefereeConsoleClient
-        tournament={matchRow.tournaments}
+        tournament={formattedTournament}
         initialMatch={match}
         initialEvents={events}
       />

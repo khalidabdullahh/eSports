@@ -630,15 +630,44 @@ export async function updateMatchPlayerStatsAction(
   }[]
 ) {
   try {
+    const DEFAULT_PLACEMENT_POINTS: Record<number | string, number> = {
+      1: 12,
+      2: 9,
+      3: 8,
+      4: 7,
+      5: 6,
+      6: 5,
+      7: 4,
+      8: 3,
+      9: 2,
+      10: 1,
+    };
+    let placementRules: Record<number | string, number> = DEFAULT_PLACEMENT_POINTS;
+    let killMultiplier = 1;
+
+    if (isSupabaseConfigured) {
+      const supabase = await createClient();
+      const { data: tourRules } = await supabase
+        .from("tournament_rules")
+        .select("*")
+        .eq("tournament_id", tournamentId)
+        .maybeSingle();
+
+      if (tourRules) {
+        placementRules = tourRules.placement_points || DEFAULT_PLACEMENT_POINTS;
+        killMultiplier = tourRules.kill_points || 1;
+      }
+    } else {
+      const tournament = dataStore.getTournament(tournamentId);
+      if (tournament?.scoring_rules) {
+        placementRules = tournament.scoring_rules.placement_points || DEFAULT_PLACEMENT_POINTS;
+        killMultiplier = tournament.scoring_rules.kill_points || 1;
+      }
+    }
+
     const match = dataStore.getMatch(matchId);
-    const tournament = dataStore.getTournament(tournamentId);
-    if (!match || !tournament) throw new Error("Match or tournament not found");
-
-    const placementRules = tournament.scoring_rules.placement_points;
-    const killMultiplier = tournament.scoring_rules.kill_points;
-
     const newParticipants: MatchParticipant[] = updatedParticipants.map((up) => {
-      const existing = match.participants.find((p) => p.id === up.id);
+      const existing = match?.participants?.find((p) => p.id === up.id);
       const kills = Math.max(0, Number(up.kills) || 0);
       const placement = up.placement && up.placement > 0 ? Number(up.placement) : undefined;
       const placementPoints = placement ? placementRules[placement] || 0 : 0;
@@ -665,7 +694,9 @@ export async function updateMatchPlayerStatsAction(
       };
     });
 
-    match.participants = newParticipants;
+    if (match) {
+      match.participants = newParticipants;
+    }
 
     revalidatePath("/live");
     revalidatePath(`/matches/${matchId}`);

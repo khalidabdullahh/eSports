@@ -29,6 +29,20 @@ import {
 } from "lucide-react";
 import confetti from "canvas-confetti";
 
+const DEFAULT_PLACEMENT_POINTS: Record<number | string, number> = {
+  1: 12,
+  2: 9,
+  3: 8,
+  4: 7,
+  5: 6,
+  6: 5,
+  7: 4,
+  8: 3,
+  9: 2,
+  10: 1,
+};
+const DEFAULT_KILL_POINTS = 1;
+
 interface RefereeConsoleClientProps {
   initialMatch: Match;
   initialEvents: MatchEvent[];
@@ -40,15 +54,25 @@ export function RefereeConsoleClient({
   initialEvents,
   tournament,
 }: RefereeConsoleClientProps) {
-  const [match, setMatch] = useState<Match>(initialMatch);
-  const [events, setEvents] = useState<MatchEvent[]>(initialEvents);
+  const [match, setMatch] = useState<Match>(initialMatch || { participants: [] } as any);
+  const [events, setEvents] = useState<MatchEvent[]>(initialEvents || []);
   const [isPending, startTransition] = useTransition();
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"touch" | "statsEditor">("statsEditor");
   const [isFinalized, setIsFinalized] = useState(
-    initialMatch.status === "ENDED" || tournament.status === "FINALIZED"
+    initialMatch?.status === "ENDED" || tournament?.status === "FINALIZED"
   );
   const [awardedRewards, setAwardedRewards] = useState<unknown[]>([]);
+
+  const placementRules =
+    tournament?.scoring_rules?.placement_points ||
+    (tournament as any)?.scoring_rules?.placementPoints ||
+    DEFAULT_PLACEMENT_POINTS;
+
+  const killMultiplier =
+    tournament?.scoring_rules?.kill_points ??
+    (tournament as any)?.scoring_rules?.killPoints ??
+    DEFAULT_KILL_POINTS;
 
   // Editable player stats state
   const [editableParticipants, setEditableParticipants] = useState<
@@ -60,16 +84,16 @@ export function RefereeConsoleClient({
       is_alive: boolean;
     }[]
   >(
-    initialMatch.participants.map((p) => ({
+    (initialMatch?.participants || []).map((p) => ({
       id: p.id,
-      participant_name: p.participant_name,
-      kills: p.kills,
+      participant_name: p.participant_name || "Warrior",
+      kills: p.kills || 0,
       placement: p.placement,
-      is_alive: p.is_alive,
+      is_alive: p.is_alive ?? true,
     }))
   );
 
-  const participants = match.participants;
+  const participants = match?.participants || [];
   const aliveParticipants = participants.filter((p) => p.is_alive);
   const nextPlacement = aliveParticipants.length;
 
@@ -89,14 +113,14 @@ export function RefereeConsoleClient({
         setEvents((prev) => [...prev, res.event!]);
         // Update local participant state
         setMatch((prev) => {
-          const updated = prev.participants.map((p) => {
+          const updated = (prev.participants || []).map((p) => {
             if (p.id === participantId) {
-              const kills = p.kills + 1;
+              const kills = (p.kills || 0) + 1;
               return {
                 ...p,
                 kills,
-                kill_points: kills * 1,
-                total_score: p.placement_points + kills * 1,
+                kill_points: kills * killMultiplier,
+                total_score: (p.placement_points || 0) + kills * killMultiplier,
               };
             }
             return p;
@@ -114,7 +138,7 @@ export function RefereeConsoleClient({
 
   const handleEliminate = (participantId: string, participantName: string) => {
     const placement = nextPlacement;
-    const placementPoints = tournament.scoring_rules.placement_points[placement] || 0;
+    const placementPoints = placementRules[placement] || 0;
 
     startTransition(async () => {
       const res = await recordMatchEventAction(
@@ -211,10 +235,10 @@ export function RefereeConsoleClient({
     startTransition(async () => {
       const lastSurvivor = participants.find((p) => p.is_alive);
       if (lastSurvivor) {
-        const place1Points = tournament.scoring_rules.placement_points[1] || 12;
+        const place1Points = placementRules[1] || 12;
         lastSurvivor.placement = 1;
         lastSurvivor.placement_points = place1Points;
-        lastSurvivor.total_score = place1Points + lastSurvivor.kill_points;
+        lastSurvivor.total_score = place1Points + (lastSurvivor.kill_points || 0);
       }
 
       const res = await finalizeTournamentAction(tournament.id, match.id);
@@ -341,9 +365,9 @@ export function RefereeConsoleClient({
               <tbody className="divide-y divide-surface-border">
                 {editableParticipants.map((p, idx) => {
                   const placePoints = p.placement
-                    ? tournament.scoring_rules.placement_points[p.placement] || 0
+                    ? placementRules[p.placement] || 0
                     : 0;
-                  const killPoints = p.kills * tournament.scoring_rules.kill_points;
+                  const killPoints = (Number(p.kills) || 0) * killMultiplier;
                   const total = placePoints + killPoints;
 
                   return (
